@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prontuário Médico</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Segoe UI', sans-serif;
+        }
+
+        body{
+            background:#eef2f7;
+        }
+
+        .dashboard{
+            display:flex;
+            min-height:100vh;
+        }
+
+        /* SIDEBAR */
+
+        .sidebar{
+            width:260px;
+            background:#14213d;
+            color:white;
+            padding:30px 20px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+        }
+
+        .logo-area h2{
+            font-size:28px;
+            margin-bottom:5px;
+        }
+
+        .logo-area span{
+            color:#4cc9f0;
+        }
+
+        .logo-area p{
+            color:#bfc8d6;
+            font-size:14px;
+        }
+
+        .menu{
+            margin-top:40px;
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+        }
+
+        .menu a{
+            color:white;
+            text-decoration:none;
+            padding:14px;
+            border-radius:10px;
+            transition:0.3s;
+            background:rgba(255,255,255,0.05);
+        }
+
+        .menu a:hover{
+            background:#1f3b68;
+        }
+
+        .user-box{
+            background:rgba(255,255,255,0.08);
+            padding:15px;
+            border-radius:12px;
+        }
+
+        /* MAIN */
+
+        .main-content{
+            flex:1;
+            padding:30px;
+        }
+
+        /* TOPO */
+
+        .topbar{
+            background:white;
+            padding:20px 30px;
+            border-radius:18px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:25px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .topbar h1{
+            color:#14213d;
+        }
+
+        .logout-btn{
+            background:#ef233c;
+            color:white;
+            border:none;
+            padding:12px 20px;
+            border-radius:10px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+
+        /* CARDS */
+
+        .card{
+            background:white;
+            padding:25px;
+            border-radius:18px;
+            margin-bottom:25px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .card h2{
+            color:#14213d;
+            margin-bottom:20px;
+            border-bottom:2px solid #eef2f7;
+            padding-bottom:10px;
+        }
+
+        /* FORM */
+
+        .row{
+            display:flex;
+            gap:20px;
+        }
+
+        .form-group{
+            display:flex;
+            flex-direction:column;
+            margin-bottom:20px;
+            width:100%;
+        }
+
+        .form-group label{
+            margin-bottom:8px;
+            font-weight:600;
+            color:#333;
+        }
+
+        .form-group input,
+        .form-group textarea{
+            padding:14px;
+            border:1px solid #dce1ea;
+            border-radius:12px;
+            outline:none;
+            transition:0.3s;
+            font-size:15px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus{
+            border-color:#4cc9f0;
+            box-shadow:0 0 0 4px rgba(76,201,240,0.15);
+        }
+
+        textarea{
+            min-height:120px;
+            resize:vertical;
+        }
+
+        /* BOTÃO */
+
+        .save-btn{
+            width:100%;
+            padding:18px;
+            border:none;
+            border-radius:14px;
+            background:#00b894;
+            color:white;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+            transition:0.3s;
+        }
+
+        .save-btn:hover{
+            background:#009d7d;
+        }
+
+        /* RESPONSIVO */
+
+        @media(max-width:900px){
+
+            .dashboard{
+                flex-direction:column;
+            }
+
+            .sidebar{
+                width:100%;
+            }
+
+            .row{
+                flex-direction:column;
+            }
+
+        }
+
+        .card{
+            background:white;
+            padding:30px;
+            border-radius:22px;
+            margin-bottom:28px;
+            box-shadow:
+            0 10px 30px rgba(0,0,0,0.05);
+            border:1px solid #edf1f7;
+        }
+
+        .card:hover{
+            transform:translateY(-2px);
+            transition:0.3s;
+        }
+
+        .topbar{
+            background:linear-gradient(135deg,#ffffff,#f7f9fc);
+        }
+
+        .save-btn{
+            margin-top:10px;
+            background:linear-gradient(135deg,#00b894,#00a884);
+            box-shadow:0 10px 20px rgba(0,184,148,0.25);
+        }
+
+        .save-btn:hover{
+            transform:translateY(-2px);
+        }
+
+        .form-group input,
+        .form-group textarea{
+            background:#f9fbfd;
+        }
+
+        .form-group label{
+            font-size:15px;
+            color:#1d3557;
+        }
+
+        .sidebar{
+            background:linear-gradient(180deg,#14213d,#0d1b2a);
+        }
+
+        .menu a{
+            border:1px solid rgba(255,255,255,0.04);
+        }
+
+        .menu a:hover{
+            transform:translateX(4px);
+        }
+
+        h2{
+            letter-spacing:0.3px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div>
+
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Painel Médico</p>
+            </div>
+
+            <nav class="menu">
+                <a href="#">📋 Prontuários</a>
+                <a href="#">👨‍⚕️ Pacientes</a>
+                <a href="#">📅 Consultas</a>
+                <a href="#">📊 Relatórios</a>
+                <a href="#">⚙️ Configurações</a>
+            </nav>
+
+        </div>
+
+        <div class="user-box">
+            <strong>Médico</strong>
+            <p>Online</p>
+        </div>
+
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div style="display:flex;align-items:center;gap:15px;">
+
+                <div style="
+                    width:50px;
+                    height:50px;
+                    border-radius:50%;
+                    background:#4cc9f0;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    color:white;
+                    font-size:20px;
+                    font-weight:bold;
+                    ">
+                    M
+                </div>
+
+                <div>
+                    <strong style="display:block;color:#14213d;">
+                        Dr. Matheus
+                    </strong>
+
+                    <span style="font-size:13px;color:gray;">
+                        Médico Cardiologista
+                    </span>
+                </div>
+                
+            </div>
+                <h1>Prontuário Médico</h1>
+
+                <div style="display:flex;align-items:center;gap:20px;">
+
+                    <div style="display:flex;align-items:center;gap:15px;">
+
+                        <div style="
+                            width:50px;
+                            height:50px;
+                            border-radius:50%;
+                            background:#4cc9f0;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            color:white;
+                            font-size:20px;
+                            font-weight:bold;
+                        ">
+                            M
+                        </div>
+
+                        <div>
+                            <strong style="display:block;color:#14213d;">
+                                Dr. Matheus
+                            </strong>
+
+                            <span style="font-size:13px;color:gray;">
+                                Médico Cardiologista
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <button class="logout-btn">
+                        Sair
+                    </button>
+
+                </div>
+
+        </header>
+
+        <form id="formProntuario">
+
+            <!-- DADOS -->
+            <section class="card">
+
+                <h2>Dados do Paciente</h2>
+
+                <div class="form-group">
+                    <label>Paciente</label>
+                    <input type="text" id="nome">
+                </div>
+
+                <div class="form-group">
+                    <label>Data de Nascimento</label>
+                    <input type="date" id="data_nascimento">
+                </div>
+
+                <div class="row">
+
+                    <div class="form-group">
+                        <label>Peso (kg)</label>
+                        <input type="number" id="peso">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Altura (m)</label>
+                        <input type="number" step="0.01" id="altura">
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SINAIS -->
+            <section class="card">
+
+                <h2>Sinais Vitais</h2>
+
+                <div class="row">
+
+                    <div class="form-group">
+                        <label>Pressão</label>
+                        <input type="text" id="pressao">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Temperatura</label>
+                        <input type="text" id="temperatura">
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="form-group">
+                        <label>Frequência Cardíaca</label>
+                        <input type="text">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Respiração</label>
+                        <input type="text">
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label>Saturação</label>
+                    <input type="text">
+                </div>
+
+            </section>
+
+            <!-- INFORMAÇÕES -->
+            <section class="card">
+
+                <h2>Informações Médicas</h2>
+
+                <div class="form-group">
+                    <label>Sintomas</label>
+                    <textarea id="diagnostico"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Receita</label>
+                    <textarea id="receita"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="observacoes"></textarea>
+                </div>
+
+            </section>
+
+            <button type="submit" class="save-btn">
+                💾 Salvar Prontuário
+            </button>
+
+        </form>
+
+    </main>
+
+</div>
+
+<script>
+
+    const API_URL = "http://localhost/Prontuario_Medico/backend/prontuarios.php";
+
+    document.getElementById("formProntuario").addEventListener("submit", async (e) => {
+
+        e.preventDefault();
+
+        const dados = {
+
+            nome: document.getElementById("nome").value,
+            data_nascimento: document.getElementById("data_nascimento").value,
+            peso: document.getElementById("peso").value,
+            altura: document.getElementById("altura").value,
+            pressao: document.getElementById("pressao").value,
+            temperatura: document.getElementById("temperatura").value,
+            diagnostico: document.getElementById("diagnostico").value,
+            receita: document.getElementById("receita").value,
+            observacoes: document.getElementById("observacoes").value
+
+        };
+
+        try {
+
+            const response = await fetch(API_URL, {
+
+                method: "POST",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body: JSON.stringify(dados)
+
+            });
+
+            const result = await response.json();
+
+            alert(result.msg);
+
+        } catch(error){
+
+            alert("Erro ao salvar prontuário");
+            console.error(error);
+
+        }
+
+    });
+
+</script>
+
+</body>
+</html>
