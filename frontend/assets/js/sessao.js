@@ -15,7 +15,7 @@
  *   3. Preenche elementos com id "user-nome" e "user-perfil".
  */
 
-const API_AUTH = 'http://localhost/prontuario_medico/backend/auth.php';
+const API_AUTH = '../backend/auth.php';
 
 /** Mapa de perfis → rótulo amigável */
 const ROTULOS_PERFIL = {

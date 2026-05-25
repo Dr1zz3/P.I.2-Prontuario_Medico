@@ -220,7 +220,7 @@
 
 <script src="assets/js/sessao.js"></script>
 <script>
-const API = 'http://localhost/prontuario_medico/backend/pacientes.php';
+const API = '../backend/pacientes.php';
 const params = new URLSearchParams(window.location.search);
 const pacienteId = parseInt(params.get('id'), 10) || null;
 

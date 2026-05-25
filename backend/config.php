@@ -11,18 +11,40 @@
  * e usar a variável global $pdo.
  */
 
-// --- Parâmetros de conexão (ajuste se seu XAMPP usar outra senha) ---
-const DB_HOST    = '127.0.0.1';
-const DB_PORT    = 3306;
-const DB_NAME    = 'prontuario_medico';
-const DB_USER    = 'root';
-const DB_PASS    = '';
-const DB_CHARSET = 'utf8mb4';
+// --- Detecção de ambiente ---
+// Em localhost (XAMPP) usa configurações locais; senão, usa produção.
+$hostHttp = $_SERVER['HTTP_HOST'] ?? '';
+$ehLocal  = in_array($hostHttp, ['localhost', '127.0.0.1'], true)
+         || str_starts_with($hostHttp, 'localhost:')
+         || str_starts_with($hostHttp, '127.0.0.1:');
+
+if ($ehLocal) {
+    // ---------- XAMPP / DESENVOLVIMENTO ----------
+    $DB = [
+        'host'    => '127.0.0.1',
+        'port'    => 3306,
+        'name'    => 'prontuario_medico',
+        'user'    => 'root',
+        'pass'    => '',           // senha vazia é o padrão do XAMPP
+        'charset' => 'utf8mb4',
+    ];
+} else {
+    // ---------- PRODUÇÃO (InfinityFree) ----------
+    // ⚠️ Ajuste estes valores conforme seu painel MySQL Databases.
+    $DB = [
+        'host'    => 'sql112.infinityfree.com',     // MYSQL HOSTNAME do painel
+        'port'    => 3306,
+        'name'    => 'if0_42012834_prontuario',     // MYSQL DATABASE NAME
+        'user'    => 'if0_42012834',                // MYSQL USERNAME
+        'pass'    => 'SUA_SENHA_AQUI',              // ⚠️ COLOQUE A SENHA DO PAINEL
+        'charset' => 'utf8mb4',
+    ];
+}
 
 // --- Conexão PDO ---
 $dsn = sprintf(
     'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-    DB_HOST, DB_PORT, DB_NAME, DB_CHARSET
+    $DB['host'], $DB['port'], $DB['name'], $DB['charset']
 );
 
 $pdoOptions = [
@@ -32,7 +54,7 @@ $pdoOptions = [
 ];
 
 try {
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, $pdoOptions);
+    $pdo = new PDO($dsn, $DB['user'], $DB['pass'], $pdoOptions);
 } catch (PDOException $e) {
     // Em produção real esse log iria pra arquivo, não pra resposta.
     http_response_code(500);
