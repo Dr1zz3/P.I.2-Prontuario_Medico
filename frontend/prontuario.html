@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prontuário — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+        /* ----- Específico do prontuário ----- */
+        .pac-selector { display: flex; gap: 12px; align-items: center;
+                        margin-bottom: 20px; flex-wrap: wrap; }
+        .pac-selector select, .pac-selector input {
+            padding: 12px; border: 1px solid #dce1ea; border-radius: 10px;
+            background: #fff; min-width: 220px; font-size: 14px;
+        }
+
+        .pac-info { background: #fff; padding: 20px; border-radius: 14px;
+                    margin-bottom: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+                    display: flex; gap: 24px; flex-wrap: wrap; }
+        .pac-info div { font-size: 14px; }
+        .pac-info div strong { display: block; color: #14213d;
+                               font-size: 12px; text-transform: uppercase;
+                               letter-spacing: 0.5px; margin-bottom: 3px; }
+
+        .tabs { display: flex; gap: 4px; margin-bottom: 0;
+                border-bottom: 2px solid #dce1ea; }
+        .tab-btn { background: none; border: none; padding: 14px 22px;
+                   font-size: 15px; font-weight: 600; cursor: pointer;
+                   color: #666; border-bottom: 3px solid transparent;
+                   margin-bottom: -2px; transition: 0.2s; }
+        .tab-btn.ativo { color: #14213d; border-bottom-color: #4cc9f0; }
+        .tab-btn:hover { color: #14213d; }
+
+        .tab-content { background: #fff; padding: 26px; border-radius: 0 14px 14px 14px;
+                       box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+
+        .soap-grid { display: grid; gap: 16px; }
+        .form-group label { display: block; font-weight: 600; color: #1d3557;
+                            margin-bottom: 6px; font-size: 14px; }
+        .form-group textarea { width: 100%; padding: 12px; border: 1px solid #dce1ea;
+                               border-radius: 10px; min-height: 80px; resize: vertical;
+                               font-family: inherit; font-size: 14px; background: #f9fbfd; }
+        .form-group textarea:focus { border-color: #4cc9f0; outline: none;
+                                     box-shadow: 0 0 0 3px rgba(76,201,240,0.15); }
+
+        .acoes { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+        .btn { padding: 12px 22px; border: none; border-radius: 10px;
+               font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-salvar { background: #f4a261; color: #fff; }
+        .btn-salvar:hover:not(:disabled) { background: #e08d44; }
+        .btn-assinar { background: #00b894; color: #fff; }
+        .btn-assinar:hover:not(:disabled) { background: #009074; }
+        .btn-suspender { background: #ef233c; color: #fff; }
+        .btn-suspender:hover:not(:disabled) { background: #c8001f; }
+        .btn-secund { background: #dce1ea; color: #1d3557; }
+        .btn-secund:hover:not(:disabled) { background: #c0c6cf; }
+
+        /* Lista histórico */
+        .evo-item { background: #fff; border-left: 4px solid #4cc9f0;
+                    padding: 18px 22px; margin-bottom: 14px; border-radius: 10px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .evo-item.rascunho  { border-left-color: #f4a261; background: #fffbf5; }
+        .evo-item.assinado  { border-left-color: #00b894; }
+        .evo-item.suspenso  { border-left-color: #ef233c; background: #fff5f5; }
+        .evo-item.suspenso .evo-body { text-decoration: line-through;
+                                       opacity: 0.6; }
+        .evo-header { display: flex; justify-content: space-between;
+                      align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .evo-header h4 { color: #14213d; font-size: 15px; }
+        .evo-header .meta { font-size: 13px; color: #666; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 11px;
+                 font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .badge-rascunho { background: #f4a261; color: #fff; }
+        .badge-assinado { background: #00b894; color: #fff; }
+        .badge-suspenso { background: #ef233c; color: #fff; }
+
+        .evo-body { font-size: 14px; color: #333; line-height: 1.6; }
+        .evo-body .campo { margin-top: 8px; }
+        .evo-body .campo strong { color: #14213d; }
+
+        .evo-suspensao {
+            background: #ffe0e0; border: 1px solid #ef233c;
+            padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
+            font-size: 13px; color: #c8001f; text-decoration: none;
+        }
+        .evo-acoes { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+        /* Sinais vitais (visualização) */
+        .sv-card { background: #fff; border-left: 4px solid #00b894;
+                   padding: 16px 20px; margin-bottom: 12px; border-radius: 10px;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .sv-card.suspenso { border-left-color: #ef233c; background: #fff5f5; }
+        .sv-card.suspenso .sv-grid { text-decoration: line-through; opacity: 0.6; }
+        .sv-card .sv-header { display:flex; justify-content:space-between;
+                              align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px; }
+        .sv-card .sv-grid { display: grid; gap: 10px; margin-top: 10px;
+                            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+        .sv-card .sv-grid .item { background: #f9fbfd; padding: 10px;
+                                  border-radius: 8px; font-size: 13px; }
+        .sv-card .sv-grid .item .lbl { color: #666; font-size: 11px;
+                                       text-transform: uppercase; }
+        .sv-card .sv-grid .item .val { font-weight: 700; color: #14213d;
+                                       font-size: 16px; margin-top: 2px; }
+        .sv-suspensao { background: #ffe0e0; border: 1px solid #ef233c;
+                        padding: 10px 14px; border-radius: 8px;
+                        margin-bottom: 10px; font-size: 13px; color: #c8001f; }
+
+        /* Receitas */
+        .rec-card { background: #fff; border-left: 4px solid #4cc9f0;
+                    padding: 16px 20px; margin-bottom: 12px; border-radius: 10px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .rec-card.rascunho  { border-left-color: #f4a261; background: #fffbf5; }
+        .rec-card.assinado  { border-left-color: #00b894; }
+        .rec-card.suspenso  { border-left-color: #ef233c; background: #fff5f5; }
+        .rec-card.suspenso .rec-body { text-decoration: line-through; opacity: 0.6; }
+        .rec-tipo-tag { display: inline-block; padding: 3px 10px; border-radius: 6px;
+                        font-size: 11px; font-weight: 700; text-transform: uppercase;
+                        background: #dce1ea; color: #1d3557; margin-left: 8px; }
+        .rec-tipo-tag.antibiotico { background: #f4a261; color: #fff; }
+        .rec-item { background: #f9fbfd; padding: 10px 14px; border-radius: 8px;
+                    margin-top: 6px; font-size: 13px; }
+        .rec-item .nome { font-weight: 700; color: #14213d; }
+        .rec-item .pos { color: #666; margin-top: 3px; }
+
+        .item-row { display: grid; gap: 8px; align-items: end;
+                    grid-template-columns: 2fr 2fr 1fr auto auto;
+                    margin-bottom: 8px; padding: 10px; background: #f9fbfd;
+                    border-radius: 8px; }
+        .item-row input { padding: 8px 10px; border: 1px solid #dce1ea;
+                          border-radius: 6px; font-size: 13px; background: #fff; }
+        .item-row label { font-size: 11px; color: #666; display:block; margin-bottom:3px; }
+        .item-row .uc-box { display: flex; align-items: center; gap: 4px;
+                            font-size: 12px; color: #14213d; padding-bottom: 6px; }
+        .item-row .btn-remover { background: #ef233c; color: #fff; border: none;
+                                 border-radius: 6px; padding: 6px 10px; cursor: pointer;
+                                 font-weight: 700; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0;
+                 background: rgba(0,0,0,0.5); z-index: 1000;
+                 align-items: center; justify-content: center; }
+        .modal.aberta { display: flex; }
+        .modal-content { background: #fff; padding: 28px; border-radius: 14px;
+                         width: 90%; max-width: 480px; }
+        .modal-content h2 { color: #14213d; margin-bottom: 12px; }
+        .modal-content p { color: #666; margin-bottom: 16px; font-size: 14px; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px;
+                 border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
+                 box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+                 transform: translateX(120%); transition: 0.3s; }
+        .toast.visivel { transform: translateX(0); }
+        .toast.sucesso { background: #00b894; }
+        .toast.erro    { background: #ef233c; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Prontuário</p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard_medico.html">🏠 Início</a>
+                <a href="pacientes.html">👥 Pacientes</a>
+                <a href="agenda.html">📅 Agenda</a>
+                <a href="prontuario.html" class="ativo">📋 Prontuário</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Prontuário Médico</h1>
+                <div class="topo-info">Evoluções, exames e receitas</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <!-- Modo busca: visível quando nenhum paciente selecionado -->
+        <div id="modoBusca">
+            <div class="pac-selector">
+                <input type="text" id="busca" placeholder="🔍 Buscar paciente por nome ou CPF..."
+                       style="flex:1; min-width:240px; padding:12px 14px;
+                              border:1px solid #dce1ea; border-radius:10px;
+                              font-size:14px; background:#fff;">
+            </div>
+
+            <div class="tabela-wrap" style="background:#fff; border-radius:14px;
+                 box-shadow:0 4px 16px rgba(0,0,0,0.05); overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">Nome</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">CPF</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">Idade</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">Telefone</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbPacientes">
+                        <tr><td colspan="5" style="padding:30px; text-align:center; color:#999;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modo paciente selecionado -->
+        <div id="modoPaciente" style="display:none;">
+            <button class="btn btn-secund" onclick="voltarParaBusca()"
+                    style="margin-bottom:16px;">⬅️ Trocar paciente</button>
+        </div>
+
+        <!-- Info do paciente -->
+        <section id="pacInfo" class="pac-info" style="display:none;"></section>
+
+        <!-- Conteúdo do prontuário -->
+        <section id="pacContent" style="display:none;">
+
+            <div class="tabs">
+                <button class="tab-btn ativo" data-tab="nova">➕ Nova Evolução</button>
+                <button class="tab-btn"       data-tab="historico">📜 Histórico</button>
+                <button class="tab-btn"       data-tab="sinais">🩺 Sinais Vitais</button>
+                <button class="tab-btn"       data-tab="receitas">💊 Receitas</button>
+            </div>
+
+            <!-- Tab: Nova Evolução -->
+            <div id="tab-nova" class="tab-content">
+                <input type="hidden" id="evoIdEdicao" value="">
+
+                <div class="soap-grid">
+                    <div class="form-group">
+                        <label>Queixa principal (S)</label>
+                        <textarea id="queixa_principal"
+                            placeholder="O que trouxe o paciente hoje?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Anamnese / HDA (S)</label>
+                        <textarea id="anamnese"
+                            placeholder="Histórico da doença atual, antecedentes, medicações em uso..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Exame físico (O)</label>
+                        <textarea id="exame_fisico"
+                            placeholder="Achados ao exame físico."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Hipótese diagnóstica (A)</label>
+                        <textarea id="hipotese_diagnostica"
+                            placeholder="Diagnóstico provável."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Conduta (P)</label>
+                        <textarea id="conduta"
+                            placeholder="Plano terapêutico, prescrições, encaminhamentos."></textarea>
+                    </div>
+                </div>
+
+                <div class="acoes">
+                    <button class="btn btn-salvar"  onclick="salvarRascunho()">
+                        💾 Salvar como rascunho
+                    </button>
+                    <button class="btn btn-assinar" onclick="assinarEvolucao()">
+                        ✍️ Assinar (torna imutável)
+                    </button>
+                    <button class="btn btn-secund" onclick="limparForm()">
+                        Limpar
+                    </button>
+                </div>
+
+                <p style="margin-top:16px; font-size:13px; color:#666;">
+                    💡 <strong>Salvar</strong> mantém como rascunho editável.
+                       <strong>Assinar</strong> finaliza a evolução — depois disso
+                       ela não pode mais ser alterada, só suspensa (com justificativa).
+                </p>
+            </div>
+
+            <!-- Tab: Histórico -->
+            <div id="tab-historico" class="tab-content" style="display:none;">
+                <div id="historicoLista">
+                    <p style="color:#666;">Selecione um paciente pra carregar o histórico.</p>
+                </div>
+            </div>
+
+            <!-- Tab: Sinais Vitais (somente leitura — registrados pela técnica de enfermagem) -->
+            <div id="tab-sinais" class="tab-content" style="display:none;">
+                <div style="background:#f0f7ff; border:1px solid #cbe5ff; border-radius:10px;
+                            padding:12px 16px; margin-bottom:16px; font-size:13px; color:#1d3557;">
+                    ℹ️ Estas aferições foram registradas pela enfermagem.
+                    Você só pode <strong>consultar</strong> — não editar.
+                </div>
+                <div id="sinaisLista">
+                    <p style="color:#666;">Selecione um paciente pra carregar os sinais vitais.</p>
+                </div>
+            </div>
+
+            <!-- Tab: Receitas -->
+            <div id="tab-receitas" class="tab-content" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center;
+                            margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                    <div style="font-size:13px; color:#666;">
+                        💡 Toda receita é vinculada a uma evolução.
+                        Crie/assine a evolução antes de emitir a receita.
+                    </div>
+                    <button class="btn btn-assinar" onclick="abrirModalReceita()">
+                        ➕ Nova Receita
+                    </button>
+                </div>
+                <div id="receitasLista">
+                    <p style="color:#666;">Selecione um paciente pra carregar as receitas.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Modal de Nova/Editar Receita -->
+<div id="modalReceita" class="modal">
+    <div class="modal-content" style="max-width:760px; max-height:90vh; overflow-y:auto;">
+        <h2 id="modalReceitaTitulo">Nova Receita</h2>
+        <input type="hidden" id="receitaId" value="">
+
+        <div class="form-group" style="margin-top:16px;">
+            <label>Vincular à evolução</label>
+            <select id="recEvolucaoId" style="width:100%; padding:10px;
+                    border:1px solid #dce1ea; border-radius:8px; background:#f9fbfd;">
+                <option value="">— selecione uma evolução ASSINADA —</option>
+            </select>
+        </div>
+
+        <div style="display:grid; gap:14px; grid-template-columns: 1fr 1fr; margin-top:14px;">
+            <div class="form-group">
+                <label>Tipo de receita</label>
+                <select id="recTipo" onchange="ajustarCamposPorTipo()"
+                        style="width:100%; padding:10px; border:1px solid #dce1ea;
+                               border-radius:8px; background:#f9fbfd;">
+                    <option value="SIMPLES">Comum (medicamentos comuns)</option>
+                    <option value="ANTIBIOTICO">Especial (antibiótico — 2 vias)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Validade (dias)</label>
+                <input type="number" id="recValidade" value="30" min="1" max="180"
+                       style="width:100%; padding:10px; border:1px solid #dce1ea;
+                              border-radius:8px; background:#f9fbfd;">
+            </div>
+        </div>
+
+        <!-- Campos do comprador (só para ANTIBIOTICO) -->
+        <fieldset id="boxComprador" style="display:none; border:1px solid #f4a261;
+                  border-radius:10px; padding:14px; margin-top:14px; background:#fffbf5;">
+            <legend style="padding:0 8px; color:#c65a00; font-weight:700; font-size:13px;">
+                Dados do comprador (obrigatório p/ antibiótico)
+            </legend>
+            <div style="display:grid; gap:10px; grid-template-columns: 2fr 1fr 1fr; margin-top:8px;">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="recCompradorNome"
+                           style="width:100%; padding:10px; border:1px solid #dce1ea;
+                                  border-radius:8px; background:#fff;">
+                </div>
+                <div class="form-group">
+                    <label>CPF</label>
+                    <input type="text" id="recCompradorCpf" maxlength="14"
+                           style="width:100%; padding:10px; border:1px solid #dce1ea;
+                                  border-radius:8px; background:#fff;">
+                </div>
+                <div class="form-group">
+                    <label>RG</label>
+                    <input type="text" id="recCompradorRg"
+                           style="width:100%; padding:10px; border:1px solid #dce1ea;
+                                  border-radius:8px; background:#fff;">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Itens (medicamentos) -->
+        <div style="margin-top:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;
+                        margin-bottom:8px;">
+                <label style="font-weight:700; color:#14213d;">Medicamentos</label>
+                <button class="btn btn-sm btn-secund" type="button" onclick="addItem()">
+                    ➕ Adicionar medicamento
+                </button>
+            </div>
+            <div id="itensReceita"></div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+            <label>Observações</label>
+            <textarea id="recObservacoes" rows="3"
+                style="width:100%; padding:10px; border:1px solid #dce1ea;
+                       border-radius:8px; background:#f9fbfd; font-family:inherit;"
+                placeholder="Ex.: tomar com bastante água, evitar bebidas alcoólicas."></textarea>
+        </div>
+
+        <div class="acoes" style="margin-top:18px;">
+            <button class="btn btn-salvar"  onclick="salvarReceita(false)">💾 Salvar rascunho</button>
+            <button class="btn btn-assinar" onclick="salvarReceita(true)">✍️ Salvar e assinar</button>
+            <button class="btn btn-secund"  onclick="fecharModalReceita()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Suspender Receita -->
+<div id="modalSuspenderRec" class="modal">
+    <div class="modal-content">
+        <h2>Suspender Receita</h2>
+        <p style="color:#666; margin-bottom:14px;">
+            Justificativa obrigatória. A receita continua no histórico, marcada como suspensa.
+        </p>
+        <div class="form-group">
+            <label>Justificativa</label>
+            <textarea id="justifSuspenderRec"
+                style="width:100%; min-height:90px; padding:10px;
+                       border-radius:8px; border:1px solid #dce1ea;"
+                placeholder="Ex.: prescrevi medicamento ao qual o paciente é alérgico."></textarea>
+        </div>
+        <div class="acoes" style="margin-top:14px;">
+            <button class="btn btn-suspender" onclick="confirmarSuspenderReceita()">Confirmar</button>
+            <button class="btn btn-secund" onclick="fecharModalSuspenderRec()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Suspensão -->
+<div id="modalSuspender" class="modal">
+    <div class="modal-content">
+        <h2>Suspender Evolução</h2>
+        <p>Esta ação marca a evolução como <strong>SUSPENSA</strong>. Ela continua
+           no histórico, mas será exibida como inválida. Justificativa é obrigatória.</p>
+        <div class="form-group">
+            <label>Justificativa</label>
+            <textarea id="justificativaSuspensao"
+                placeholder="Ex.: medicação prescrita estava errada — paciente alérgico."
+                style="width:100%; min-height:90px; padding:10px; border-radius:8px; border:1px solid #dce1ea;"></textarea>
+        </div>
+        <div class="acoes" style="margin-top:14px;">
+            <button class="btn btn-suspender" onclick="confirmarSuspensao()">
+                Confirmar suspensão
+            </button>
+            <button class="btn btn-secund" onclick="fecharModalSuspender()">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+const API_PAC = 'http://localhost/prontuario_medico/backend/pacientes.php';
+const API_EVO = 'http://localhost/prontuario_medico/backend/evolucoes.php';
+const API_SV  = 'http://localhost/prontuario_medico/backend/sinais_vitais.php';
+const API_REC = 'http://localhost/prontuario_medico/backend/receitas.php';
+const API_MED = 'http://localhost/prontuario_medico/backend/medicamentos.php';
+let catalogoMedicamentos = []; // cache do catálogo (carregado ao abrir modal)
+
+let pacienteAtual = null;
+let evoSuspenderId = null;  // id da evolução que está prestes a ser suspensa
+
+// ---------- Bootstrap ----------
+window.addEventListener('DOMContentLoaded', async () => {
+    await verificarSessao('MEDICO');
+    configurarTabs();
+
+    // Busca com debounce
+    let timer = null;
+    document.getElementById('busca').addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => carregarListaPacientes(e.target.value), 250);
+    });
+
+    await carregarListaPacientes('');
+
+    // Pré-seleciona quando vier ?paciente_id=N
+    const urlParams = new URLSearchParams(window.location.search);
+    const pacIdUrl = parseInt(urlParams.get('paciente_id'), 10);
+    if (pacIdUrl) await selecionarPaciente(pacIdUrl);
+});
+
+// ---------- Lista + busca ----------
+async function carregarListaPacientes(filtro) {
+    const url = API_PAC + '?acao=listar'
+              + (filtro ? '&busca=' + encodeURIComponent(filtro) : '');
+    const r = await fetch(url, { credentials: 'include' });
+    const j = await r.json();
+    const tb = document.getElementById('tbPacientes');
+    if (j.status !== 'ok' || !j.pacientes || j.pacientes.length === 0) {
+        tb.innerHTML = '<tr><td colspan="5" style="padding:30px; text-align:center; color:#999;">Nenhum paciente encontrado.</td></tr>';
+        return;
+    }
+    tb.innerHTML = j.pacientes.map(p => `
+        <tr style="cursor:pointer; transition:background 0.15s;"
+            onmouseover="this.style.background='#f9fbfd'"
+            onmouseout="this.style.background=''"
+            onclick="selecionarPaciente(${p.id})">
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                <strong>${escapar(p.nome)}</strong></td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                ${formatarCpf(p.cpf)}</td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                ${calcularIdade(p.data_nascimento)} anos</td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                ${escapar(p.telefone || '—')}</td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                <span style="color:#4cc9f0; font-weight:600;">Abrir prontuário →</span></td>
+        </tr>
+    `).join('');
+}
+
+async function selecionarPaciente(id) {
+    try {
+        const r = await fetch(API_PAC + '?acao=buscar&id=' + id, { credentials: 'include' });
+        const j = await r.json();
+        if (j.status !== 'ok') return;
+        pacienteAtual = j.paciente;
+        renderizarPacienteInfo();
+        document.getElementById('modoBusca').style.display    = 'none';
+        document.getElementById('modoPaciente').style.display = 'block';
+        document.getElementById('pacContent').style.display   = 'block';
+        // Carrega histórico, sinais vitais e receitas (ficam prontos em background)
+        carregarHistorico();
+        carregarSinaisVitais();
+        carregarReceitas();
+    } catch (err) { console.error(err); }
+}
+
+function voltarParaBusca() {
+    document.getElementById('modoBusca').style.display    = 'block';
+    document.getElementById('modoPaciente').style.display = 'none';
+    document.getElementById('pacInfo').style.display      = 'none';
+    document.getElementById('pacContent').style.display   = 'none';
+    pacienteAtual = null;
+    limparForm();
+}
+
+function formatarCpf(cpf) {
+    if (!cpf || cpf.length !== 11) return cpf || '—';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function renderizarPacienteInfo() {
+    const p = pacienteAtual;
+    const idade = calcularIdade(p.data_nascimento);
+    const div = document.getElementById('pacInfo');
+    div.innerHTML = `
+        <div><strong>Nome</strong>${p.nome}</div>
+        <div><strong>CPF</strong>${p.cpf}</div>
+        <div><strong>Idade</strong>${idade} anos</div>
+        <div><strong>Sexo</strong>${p.sexo}</div>
+        <div><strong>Telefone</strong>${p.telefone || '—'}</div>
+    `;
+    div.style.display = 'flex';
+}
+
+function calcularIdade(nasc) {
+    if (!nasc) return '—';
+    const d = new Date(nasc);
+    const hoje = new Date();
+    let i = hoje.getFullYear() - d.getFullYear();
+    const m = hoje.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) i--;
+    return i;
+}
+
+// ---------- Tabs ----------
+function configurarTabs() {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('ativo'));
+            b.classList.add('ativo');
+            const alvo = b.dataset.tab;
+            document.getElementById('tab-nova').style.display      = (alvo === 'nova')      ? 'block' : 'none';
+            document.getElementById('tab-historico').style.display = (alvo === 'historico') ? 'block' : 'none';
+            document.getElementById('tab-sinais').style.display    = (alvo === 'sinais')    ? 'block' : 'none';
+            document.getElementById('tab-receitas').style.display  = (alvo === 'receitas')  ? 'block' : 'none';
+            if (alvo === 'historico') carregarHistorico();
+            if (alvo === 'sinais')    carregarSinaisVitais();
+            if (alvo === 'receitas')  carregarReceitas();
+        });
+    });
+}
+
+// ---------- Sinais vitais (leitura) ----------
+async function carregarSinaisVitais() {
+    if (!pacienteAtual) return;
+    const div = document.getElementById('sinaisLista');
+    div.innerHTML = '<p style="color:#666;">Carregando...</p>';
+
+    const r = await fetch(`${API_SV}?acao=listar&paciente_id=${pacienteAtual.id}`,
+                          { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') {
+        div.innerHTML = `<p style="color:#c00;">${j.msg}</p>`;
+        return;
+    }
+    if (!j.sinais || j.sinais.length === 0) {
+        div.innerHTML = '<p style="color:#666;">Nenhuma aferição registrada pra este paciente.</p>';
+        return;
+    }
+    div.innerHTML = j.sinais.map(renderizarSinalVital).join('');
+}
+
+function renderizarSinalVital(s) {
+    const data = new Date(s.data_afericao).toLocaleString('pt-BR');
+    const classe = s.status.toLowerCase();
+
+    const avisoSusp = (s.status === 'SUSPENSO')
+        ? `<div class="sv-suspensao">⚠️ <strong>SUSPENSA:</strong> ${escapar(s.justificativa_suspensao)}</div>`
+        : '';
+
+    const items = [];
+    if (s.pressao_sistolica && s.pressao_diastolica)
+        items.push(`<div class="item"><div class="lbl">PA</div><div class="val">${s.pressao_sistolica}/${s.pressao_diastolica}</div></div>`);
+    if (s.frequencia_cardiaca)
+        items.push(`<div class="item"><div class="lbl">FC</div><div class="val">${s.frequencia_cardiaca} bpm</div></div>`);
+    if (s.frequencia_respiratoria)
+        items.push(`<div class="item"><div class="lbl">FR</div><div class="val">${s.frequencia_respiratoria} irpm</div></div>`);
+    if (s.saturacao_o2)
+        items.push(`<div class="item"><div class="lbl">SatO₂</div><div class="val">${s.saturacao_o2}%</div></div>`);
+    if (s.temperatura)
+        items.push(`<div class="item"><div class="lbl">Temp</div><div class="val">${s.temperatura}°C</div></div>`);
+    if (s.peso_kg)
+        items.push(`<div class="item"><div class="lbl">Peso</div><div class="val">${s.peso_kg} kg</div></div>`);
+    if (s.altura_cm)
+        items.push(`<div class="item"><div class="lbl">Altura</div><div class="val">${s.altura_cm} cm</div></div>`);
+    // IMC se tiver peso + altura
+    if (s.peso_kg && s.altura_cm) {
+        const m = s.altura_cm / 100;
+        const imc = (s.peso_kg / (m * m)).toFixed(1);
+        items.push(`<div class="item"><div class="lbl">IMC</div><div class="val">${imc}</div></div>`);
+    }
+
+    const badge = (s.status === 'ASSINADO')
+        ? '<span class="badge badge-assinado">ASSINADO</span>'
+        : (s.status === 'SUSPENSO')
+        ? '<span class="badge badge-suspenso">SUSPENSO</span>'
+        : '<span class="badge badge-rascunho">RASCUNHO</span>';
+
+    return `
+        <div class="sv-card ${classe}">
+            <div class="sv-header">
+                <h4 style="color:#14213d; font-size:15px;">${data}</h4>
+                ${badge}
+            </div>
+            <div style="font-size:13px; color:#666; margin-bottom:8px;">
+                Registrado por ${escapar(s.autor_nome)}
+                ${s.assinado_em ? '· Assinado em ' + new Date(s.assinado_em).toLocaleString('pt-BR') : ''}
+            </div>
+            ${avisoSusp}
+            <div class="sv-grid">${items.join('')}</div>
+            ${s.observacoes
+                ? `<div style="margin-top:10px; font-size:13px;"><strong>Obs:</strong> ${escapar(s.observacoes)}</div>`
+                : ''}
+        </div>
+    `;
+}
+
+// ---------- Formulário (nova/editar evolução) ----------
+function lerForm() {
+    return {
+        queixa_principal:     document.getElementById('queixa_principal').value,
+        anamnese:             document.getElementById('anamnese').value,
+        exame_fisico:         document.getElementById('exame_fisico').value,
+        hipotese_diagnostica: document.getElementById('hipotese_diagnostica').value,
+        conduta:              document.getElementById('conduta').value,
+    };
+}
+function preencherForm(evo) {
+    document.getElementById('evoIdEdicao').value           = evo.id ?? '';
+    document.getElementById('queixa_principal').value     = evo.queixa_principal     ?? '';
+    document.getElementById('anamnese').value             = evo.anamnese             ?? '';
+    document.getElementById('exame_fisico').value         = evo.exame_fisico         ?? '';
+    document.getElementById('hipotese_diagnostica').value = evo.hipotese_diagnostica ?? '';
+    document.getElementById('conduta').value              = evo.conduta              ?? '';
+}
+function limparForm() {
+    document.getElementById('evoIdEdicao').value = '';
+    ['queixa_principal','anamnese','exame_fisico','hipotese_diagnostica','conduta']
+        .forEach(id => document.getElementById(id).value = '');
+}
+
+async function salvarRascunho() {
+    if (!pacienteAtual) return toast('Selecione um paciente.', 'erro');
+
+    const idEdicao = document.getElementById('evoIdEdicao').value;
+    const dados = lerForm();
+
+    let url, method;
+    if (idEdicao) {
+        url    = `${API_EVO}?acao=salvar&id=${idEdicao}`;
+        method = 'PUT';
+    } else {
+        url    = `${API_EVO}?acao=criar`;
+        method = 'POST';
+        dados.paciente_id = pacienteAtual.id;
+    }
+    const r = await fetch(url, {
+        method, credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados),
+    });
+    const j = await r.json();
+    if (j.status === 'ok' || r.status === 201) {
+        toast('Rascunho salvo.', 'sucesso');
+        if (j.id) document.getElementById('evoIdEdicao').value = j.id;
+        carregarHistorico();
+    } else {
+        toast(j.msg || 'Erro ao salvar.', 'erro');
+    }
+}
+
+async function assinarEvolucao() {
+    if (!pacienteAtual) return toast('Selecione um paciente.', 'erro');
+
+    let idEdicao = document.getElementById('evoIdEdicao').value;
+    // Se nunca foi salvo, salva primeiro pra ter id
+    if (!idEdicao) {
+        await salvarRascunho();
+        idEdicao = document.getElementById('evoIdEdicao').value;
+        if (!idEdicao) return;
+    }
+    if (!confirm('Após assinar a evolução fica imutável. Continuar?')) return;
+
+    const r = await fetch(`${API_EVO}?acao=assinar&id=${idEdicao}`, {
+        method: 'PUT', credentials: 'include',
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast('Evolução assinada.', 'sucesso');
+        limparForm();
+        carregarHistorico();
+    } else {
+        toast(j.msg || 'Erro ao assinar.', 'erro');
+    }
+}
+
+// ---------- Histórico ----------
+async function carregarHistorico() {
+    if (!pacienteAtual) return;
+    const div = document.getElementById('historicoLista');
+    div.innerHTML = '<p style="color:#666;">Carregando...</p>';
+
+    const r = await fetch(`${API_EVO}?acao=listar&paciente_id=${pacienteAtual.id}`,
+                          { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') {
+        div.innerHTML = `<p style="color:#c00;">${j.msg}</p>`;
+        return;
+    }
+    if (j.evolucoes.length === 0) {
+        div.innerHTML = '<p style="color:#666;">Nenhuma evolução registrada ainda.</p>';
+        return;
+    }
+    div.innerHTML = j.evolucoes.map(renderizarEvolucao).join('');
+}
+
+function renderizarEvolucao(e) {
+    const data = new Date(e.data_atendimento).toLocaleString('pt-BR');
+    const classe = e.status.toLowerCase();
+    const badgeClasse = 'badge-' + classe;
+
+    const podeEditar    = (e.status === 'RASCUNHO' && e.eu_sou_autor);
+    const podeSuspender = (e.status === 'ASSINADO' && e.eu_sou_autor);
+
+    const avisoSusp = (e.status === 'SUSPENSO')
+        ? `<div class="evo-suspensao">⚠️ <strong>SUSPENSA:</strong> ${escapar(e.justificativa_suspensao)}</div>`
+        : '';
+
+    const acoesHtml = [];
+    if (podeEditar) {
+        acoesHtml.push(`<button class="btn btn-sm btn-secund" onclick='editarEvolucao(${JSON.stringify(e)})'>Continuar editando</button>`);
+    }
+    if (podeSuspender) {
+        acoesHtml.push(`<button class="btn btn-sm btn-suspender" onclick="abrirModalSuspender(${e.id})">Suspender</button>`);
+    }
+
+    return `
+        <div class="evo-item ${classe}">
+            <div class="evo-header">
+                <h4>${data}</h4>
+                <span class="badge ${badgeClasse}">${e.status}</span>
+            </div>
+            <div class="meta" style="font-size:13px; color:#666; margin-bottom:8px;">
+                ${escapar(e.medico_nome)} (CRM ${escapar(e.crm_numero)}/${escapar(e.crm_uf)})
+                ${e.assinado_em ? '· Assinada em ' + new Date(e.assinado_em).toLocaleString('pt-BR') : ''}
+            </div>
+            ${avisoSusp}
+            <div class="evo-body">
+                ${renderCampo('Queixa principal',  e.queixa_principal)}
+                ${renderCampo('Anamnese',          e.anamnese)}
+                ${renderCampo('Exame físico',      e.exame_fisico)}
+                ${renderCampo('Hipótese diag.',    e.hipotese_diagnostica)}
+                ${renderCampo('Conduta',           e.conduta)}
+            </div>
+            ${acoesHtml.length ? '<div class="evo-acoes">' + acoesHtml.join('') + '</div>' : ''}
+        </div>
+    `;
+}
+function renderCampo(label, valor) {
+    if (!valor) return '';
+    return `<div class="campo"><strong>${label}:</strong> ${escapar(valor)}</div>`;
+}
+function escapar(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+
+function editarEvolucao(e) {
+    preencherForm(e);
+    // Volta pra aba "nova"
+    document.querySelector('.tab-btn[data-tab="nova"]').click();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- Suspender ----------
+function abrirModalSuspender(id) {
+    evoSuspenderId = id;
+    document.getElementById('justificativaSuspensao').value = '';
+    document.getElementById('modalSuspender').classList.add('aberta');
+}
+function fecharModalSuspender() {
+    evoSuspenderId = null;
+    document.getElementById('modalSuspender').classList.remove('aberta');
+}
+async function confirmarSuspensao() {
+    const justif = document.getElementById('justificativaSuspensao').value.trim();
+    if (!justif) return toast('Justificativa é obrigatória.', 'erro');
+
+    const r = await fetch(`${API_EVO}?acao=suspender&id=${evoSuspenderId}`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ justificativa: justif }),
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast('Evolução suspensa.', 'sucesso');
+        fecharModalSuspender();
+        carregarHistorico();
+    } else {
+        toast(j.msg || 'Erro ao suspender.', 'erro');
+    }
+}
+
+// ---------- Toast ----------
+function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visivel ' + (tipo || 'sucesso');
+    setTimeout(() => t.classList.remove('visivel'), 3000);
+}
+
+// ===========================================================
+// RECEITAS
+// ===========================================================
+let recSuspenderId = null;
+
+async function carregarReceitas() {
+    if (!pacienteAtual) return;
+    const div = document.getElementById('receitasLista');
+    div.innerHTML = '<p style="color:#666;">Carregando...</p>';
+
+    const r = await fetch(`${API_REC}?acao=listar_paciente&paciente_id=${pacienteAtual.id}`,
+                          { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') {
+        div.innerHTML = `<p style="color:#c00;">${j.msg}</p>`;
+        return;
+    }
+    if (!j.receitas || j.receitas.length === 0) {
+        div.innerHTML = '<p style="color:#666;">Nenhuma receita emitida pra este paciente.</p>';
+        return;
+    }
+    div.innerHTML = j.receitas.map(renderizarReceita).join('');
+}
+
+function renderizarReceita(r) {
+    const data = new Date(r.data_emissao).toLocaleString('pt-BR');
+    const classe = r.status.toLowerCase();
+    const podeEditar    = (r.status === 'RASCUNHO' && r.eu_sou_autor);
+    const podeSuspender = (r.status === 'ASSINADO' && r.eu_sou_autor);
+    const podeImprimir  = (r.status === 'ASSINADO' || r.status === 'SUSPENSO');
+
+    const tipoTag = r.tipo === 'ANTIBIOTICO'
+        ? '<span class="rec-tipo-tag antibiotico">💊 Antibiótico (2 vias)</span>'
+        : '<span class="rec-tipo-tag">Comum</span>';
+
+    const avisoSusp = (r.status === 'SUSPENSO')
+        ? `<div class="sv-suspensao">⚠️ <strong>SUSPENSA:</strong> ${escapar(r.justificativa_suspensao)}</div>`
+        : '';
+
+    const itensHtml = (r.itens || []).map(it => `
+        <div class="rec-item">
+            <div class="nome">${escapar(it.descricao_livre)}</div>
+            <div class="pos">${escapar(it.posologia)}
+                ${it.quantidade ? '· Qtd: ' + escapar(it.quantidade) : ''}
+                ${parseInt(it.uso_continuo,10) ? '· <strong>Uso contínuo</strong>' : ''}
+            </div>
+        </div>
+    `).join('');
+
+    const acoes = [];
+    if (podeEditar)
+        acoes.push(`<button class="btn btn-sm btn-secund" onclick="editarReceita(${r.id})">Editar</button>`);
+    if (podeImprimir)
+        acoes.push(`<button class="btn btn-sm btn-assinar"
+            onclick="window.open('receituario_imprimir.html?id=${r.id}','_blank')">🖨️ Imprimir</button>`);
+    if (podeSuspender)
+        acoes.push(`<button class="btn btn-sm btn-suspender" onclick="abrirModalSuspenderRec(${r.id})">Suspender</button>`);
+
+    return `
+        <div class="rec-card ${classe}">
+            <div class="sv-header">
+                <h4 style="color:#14213d; font-size:15px;">
+                    ${data} ${tipoTag}
+                </h4>
+                <span class="badge badge-${classe}">${r.status}</span>
+            </div>
+            <div style="font-size:13px; color:#666; margin-bottom:8px;">
+                ${escapar(r.medico_nome)} (CRM ${escapar(r.crm_numero)}/${escapar(r.crm_uf)})
+                · Validade ${r.validade_dias} dias
+                ${r.assinado_em ? '· Assinada ' + new Date(r.assinado_em).toLocaleString('pt-BR') : ''}
+            </div>
+            ${avisoSusp}
+            <div class="rec-body">
+                ${itensHtml}
+                ${r.observacoes ? `<div style="margin-top:10px; font-size:13px; padding:8px 12px; background:#f0f7ff; border-radius:8px;"><strong>Obs:</strong> ${escapar(r.observacoes)}</div>` : ''}
+            </div>
+            ${acoes.length ? '<div class="evo-acoes" style="margin-top:12px;">' + acoes.join('') + '</div>' : ''}
+        </div>
+    `;
+}
+
+// ---------- Modal ----------
+async function abrirModalReceita(idEdicao) {
+    if (!pacienteAtual) return toast('Selecione um paciente.', 'erro');
+
+    document.getElementById('receitaId').value = idEdicao ?? '';
+    document.getElementById('modalReceitaTitulo').textContent = idEdicao ? 'Editar Receita' : 'Nova Receita';
+
+    // Limpa campos
+    document.getElementById('recTipo').value = 'SIMPLES';
+    document.getElementById('recValidade').value = '30';
+    document.getElementById('recCompradorNome').value = '';
+    document.getElementById('recCompradorCpf').value = '';
+    document.getElementById('recCompradorRg').value = '';
+    document.getElementById('recObservacoes').value = '';
+    document.getElementById('itensReceita').innerHTML = '';
+
+    // Carrega evoluções ASSINADAS pra dropdown
+    await carregarEvolucoesDropdown();
+    // Carrega catálogo de medicamentos (datalist do autocomplete)
+    await carregarCatalogoMedicamentos();
+
+    // Se for edição, popula com dados
+    if (idEdicao) {
+        const r = await fetch(`${API_REC}?acao=buscar&id=${idEdicao}`, { credentials: 'include' });
+        const j = await r.json();
+        if (j.status === 'ok') {
+            const rec = j.receita;
+            document.getElementById('recEvolucaoId').value      = rec.evolucao_id;
+            document.getElementById('recTipo').value            = rec.tipo;
+            document.getElementById('recValidade').value        = rec.validade_dias;
+            document.getElementById('recCompradorNome').value   = rec.comprador_nome || '';
+            document.getElementById('recCompradorCpf').value    = rec.comprador_cpf || '';
+            document.getElementById('recCompradorRg').value     = rec.comprador_rg || '';
+            document.getElementById('recObservacoes').value     = rec.observacoes || '';
+            (rec.itens || []).forEach(it => addItem(it));
+        }
+    } else {
+        // Nova: adiciona uma linha vazia de medicamento
+        addItem();
+    }
+
+    ajustarCamposPorTipo();
+    document.getElementById('modalReceita').classList.add('aberta');
+}
+
+function fecharModalReceita() {
+    document.getElementById('modalReceita').classList.remove('aberta');
+}
+
+async function carregarEvolucoesDropdown() {
+    const sel = document.getElementById('recEvolucaoId');
+    sel.innerHTML = '<option value="">— selecione uma evolução ASSINADA —</option>';
+
+    const r = await fetch(`${API_EVO}?acao=listar&paciente_id=${pacienteAtual.id}`,
+                          { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') return;
+    // Só pode vincular receita a evolução ASSINADA
+    const evos = (j.evolucoes || []).filter(e => e.status === 'ASSINADO');
+    if (evos.length === 0) {
+        sel.innerHTML = '<option value="">⚠️ Sem evoluções assinadas — assine uma evolução primeiro</option>';
+        return;
+    }
+    evos.forEach(e => {
+        const dt = new Date(e.data_atendimento).toLocaleString('pt-BR');
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = `${dt} — ${(e.queixa_principal || '').slice(0, 50)}`;
+        sel.appendChild(opt);
+    });
+}
+
+function ajustarCamposPorTipo() {
+    const tipo = document.getElementById('recTipo').value;
+    document.getElementById('boxComprador').style.display =
+        (tipo === 'ANTIBIOTICO') ? 'block' : 'none';
+}
+
+async function carregarCatalogoMedicamentos() {
+    if (catalogoMedicamentos.length > 0) {
+        renderizarDatalist();
+        return;
+    }
+    try {
+        const r = await fetch(`${API_MED}?acao=listar`, { credentials: 'include' });
+        const j = await r.json();
+        if (j.status === 'ok') catalogoMedicamentos = j.medicamentos || [];
+        renderizarDatalist();
+    } catch (err) { console.error('Erro catálogo:', err); }
+}
+
+function renderizarDatalist() {
+    let dl = document.getElementById('datalist-medicamentos');
+    if (!dl) {
+        dl = document.createElement('datalist');
+        dl.id = 'datalist-medicamentos';
+        document.body.appendChild(dl);
+    }
+    dl.innerHTML = catalogoMedicamentos.map(m => {
+        const label = `${m.nome_comercial} (${m.principio_ativo})`
+                    + (m.apresentacao ? ' — ' + m.apresentacao : '')
+                    + (parseInt(m.e_antibiotico, 10) ? ' [ANTIBIÓTICO]' : '');
+        return `<option value="${escapar(label)}" data-id="${m.id}" data-antibiotico="${m.e_antibiotico}"></option>`;
+    }).join('');
+}
+
+function addItem(item) {
+    const cont = document.getElementById('itensReceita');
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.innerHTML = `
+        <div>
+            <label>Medicamento <span style="color:#4cc9f0;font-size:10px;">(digite p/ ver sugestões)</span></label>
+            <input type="text" data-campo="descricao_livre"
+                list="datalist-medicamentos"
+                onchange="aoEscolherMedicamento(this)"
+                placeholder="Ex.: Dipirona sódica 500mg comprimido"
+                value="${escapar(item?.descricao_livre || '')}">
+        </div>
+        <div>
+            <label>Posologia</label>
+            <input type="text" data-campo="posologia"
+                placeholder="Ex.: 1 cp 8/8h por 5 dias"
+                value="${escapar(item?.posologia || '')}">
+        </div>
+        <div>
+            <label>Quantidade</label>
+            <input type="text" data-campo="quantidade"
+                placeholder="1 caixa"
+                value="${escapar(item?.quantidade || '')}">
+        </div>
+        <div class="uc-box">
+            <input type="checkbox" data-campo="uso_continuo"
+                ${parseInt(item?.uso_continuo, 10) ? 'checked' : ''}>
+            <label>uso contínuo</label>
+        </div>
+        <button class="btn-remover" type="button"
+            onclick="this.parentElement.remove()">✕</button>
+    `;
+    cont.appendChild(div);
+}
+
+// Quando o médico escolhe um medicamento do datalist, se for antibiótico
+// e a receita ainda for COMUM, sugere trocar pra ANTIBIOTICO.
+function aoEscolherMedicamento(input) {
+    const valor = input.value.trim();
+    const opt = Array.from(document.querySelectorAll('#datalist-medicamentos option'))
+        .find(o => o.value === valor);
+    if (!opt) return;
+    const ehAntibiotico = (opt.dataset.antibiotico === '1');
+    const tipoAtual = document.getElementById('recTipo').value;
+    if (ehAntibiotico && tipoAtual !== 'ANTIBIOTICO') {
+        if (confirm('Este medicamento é antibiótico.\n\nMudar o tipo da receita para "Especial (antibiótico — 2 vias)"?')) {
+            document.getElementById('recTipo').value = 'ANTIBIOTICO';
+            ajustarCamposPorTipo();
+            toast('Tipo da receita alterado para antibiótico.', 'sucesso');
+        }
+    }
+}
+
+function lerItensReceita() {
+    const linhas = document.querySelectorAll('#itensReceita .item-row');
+    return Array.from(linhas).map(row => {
+        const get = c => row.querySelector(`[data-campo="${c}"]`);
+        return {
+            descricao_livre: get('descricao_livre').value,
+            posologia:       get('posologia').value,
+            quantidade:      get('quantidade').value,
+            uso_continuo:    get('uso_continuo').checked,
+        };
+    }).filter(it => it.descricao_livre.trim() && it.posologia.trim());
+}
+
+async function salvarReceita(comAssinatura) {
+    const evolucaoId = parseInt(document.getElementById('recEvolucaoId').value, 10);
+    if (!evolucaoId) return toast('Selecione uma evolução.', 'erro');
+
+    const itens = lerItensReceita();
+    if (itens.length === 0) return toast('Adicione pelo menos 1 medicamento.', 'erro');
+
+    const dados = {
+        evolucao_id:     evolucaoId,
+        tipo:            document.getElementById('recTipo').value,
+        validade_dias:   parseInt(document.getElementById('recValidade').value, 10) || 30,
+        comprador_nome:  document.getElementById('recCompradorNome').value,
+        comprador_cpf:   document.getElementById('recCompradorCpf').value,
+        comprador_rg:    document.getElementById('recCompradorRg').value,
+        observacoes:     document.getElementById('recObservacoes').value,
+        itens:           itens,
+    };
+
+    const idEdicao = document.getElementById('receitaId').value;
+    let url, method;
+    if (idEdicao) {
+        url = `${API_REC}?acao=salvar&id=${idEdicao}`;
+        method = 'PUT';
+    } else {
+        url = `${API_REC}?acao=criar`;
+        method = 'POST';
+    }
+
+    const r = await fetch(url, {
+        method, credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(dados),
+    });
+    const j = await r.json();
+    if (!(j.status === 'ok' || r.status === 201)) {
+        return toast(j.msg || 'Erro ao salvar.', 'erro');
+    }
+
+    // Se pediu pra assinar, faz a chamada de assinatura
+    let receitaId = j.id ?? idEdicao;
+    if (comAssinatura && receitaId) {
+        if (!confirm('Após assinar a receita fica imutável. Continuar?')) {
+            toast('Rascunho salvo, não assinado.', 'sucesso');
+            fecharModalReceita();
+            carregarReceitas();
+            return;
+        }
+        const r2 = await fetch(`${API_REC}?acao=assinar&id=${receitaId}`, {
+            method: 'PUT', credentials: 'include',
+        });
+        const j2 = await r2.json();
+        if (j2.status !== 'ok') {
+            return toast(j2.msg || 'Erro ao assinar.', 'erro');
+        }
+        toast('Receita assinada.', 'sucesso');
+    } else {
+        toast('Rascunho salvo.', 'sucesso');
+    }
+
+    fecharModalReceita();
+    carregarReceitas();
+}
+
+function editarReceita(id) {
+    abrirModalReceita(id);
+}
+
+// ---------- Suspender ----------
+function abrirModalSuspenderRec(id) {
+    recSuspenderId = id;
+    document.getElementById('justifSuspenderRec').value = '';
+    document.getElementById('modalSuspenderRec').classList.add('aberta');
+}
+function fecharModalSuspenderRec() {
+    recSuspenderId = null;
+    document.getElementById('modalSuspenderRec').classList.remove('aberta');
+}
+async function confirmarSuspenderReceita() {
+    const j = document.getElementById('justifSuspenderRec').value.trim();
+    if (!j) return toast('Justificativa é obrigatória.', 'erro');
+    const r = await fetch(`${API_REC}?acao=suspender&id=${recSuspenderId}`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ justificativa: j }),
+    });
+    const resp = await r.json();
+    if (resp.status === 'ok') {
+        toast('Receita suspensa.', 'sucesso');
+        fecharModalSuspenderRec();
+        carregarReceitas();
+    } else {
+        toast(resp.msg || 'Erro.', 'erro');
+    }
+}
+</script>
+
+</body>
+</html>

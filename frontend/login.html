@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Prontuário Médico</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Verdana, sans-serif; }
+        body {
+            background: linear-gradient(135deg, #14213d, #0d1b2a);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            width: 100%; max-width: 400px;
+            padding: 40px 32px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo h1 { color: #14213d; font-size: 32px; letter-spacing: -1px; }
+        .logo h1 span { color: #4cc9f0; }
+        .logo p { color: #666; font-size: 14px; margin-top: 4px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600;
+                color: #1d3557; font-size: 14px; }
+        input {
+            width: 100%; padding: 12px 14px;
+            border: 1px solid #dce1ea; border-radius: 10px;
+            font-size: 15px; outline: none; transition: 0.2s;
+            background: #f9fbfd;
+        }
+        input:focus { border-color: #4cc9f0;
+                      box-shadow: 0 0 0 3px rgba(76,201,240,0.15); }
+        button {
+            width: 100%; padding: 14px;
+            background: #14213d; color: #fff;
+            border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-top: 8px;
+            transition: 0.2s;
+        }
+        button:hover { background: #1f3b68; }
+        button:disabled { opacity: 0.6; cursor: wait; }
+        .erro {
+            background: #fee; color: #c00;
+            padding: 12px; border-radius: 8px;
+            font-size: 14px; margin-bottom: 16px;
+            display: none;
+        }
+        .erro.visivel { display: block; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <h1>MED<span>+</span>CLIN</h1>
+            <p>Sistema de Prontuário Médico</p>
+        </div>
+
+        <div id="erro" class="erro"></div>
+
+        <form id="formLogin">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" required autofocus
+                       placeholder="seu@email.com">
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" required
+                       placeholder="********">
+            </div>
+            <button type="submit" id="btnEntrar">Entrar</button>
+        </form>
+    </div>
+
+<script>
+    const API = 'http://localhost/prontuario_medico/backend/auth.php';
+
+    const form     = document.getElementById('formLogin');
+    const btn      = document.getElementById('btnEntrar');
+    const divErro  = document.getElementById('erro');
+
+    function mostrarErro(msg) {
+        divErro.textContent = msg;
+        divErro.classList.add('visivel');
+    }
+    function limparErro() {
+        divErro.textContent = '';
+        divErro.classList.remove('visivel');
+    }
+
+    // Redireciona pro dashboard correto conforme o perfil
+    function redirecionarPorPerfil(perfil) {
+        const destinos = {
+            'MEDICO':              'dashboard_medico.html',
+            'RECEPCAO':            'dashboard_recepcao.html',
+            'TECNICO_ENFERMAGEM':  'dashboard_tecnico.html',
+            'ADMIN':               'dashboard_admin.html',
+        };
+        window.location.href = destinos[perfil] ?? 'dashboard.html';
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        limparErro();
+        btn.disabled = true;
+        btn.textContent = 'Entrando...';
+
+        const dados = {
+            email: document.getElementById('email').value.trim(),
+            senha: document.getElementById('senha').value,
+        };
+
+        try {
+            const resp = await fetch(API + '?acao=login', {
+                method: 'POST',
+                credentials: 'include',  // envia/recebe cookie de sessão
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados),
+            });
+            const json = await resp.json();
+
+            if (resp.ok && json.status === 'ok') {
+                redirecionarPorPerfil(json.usuario.perfil);
+            } else {
+                mostrarErro(json.msg || 'Falha no login.');
+            }
+        } catch (err) {
+            mostrarErro('Erro de conexão com o servidor.');
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Entrar';
+        }
+    });
+</script>
+</body>
+</html>

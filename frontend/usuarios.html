@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+        .barra { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .barra input { flex: 1; min-width: 240px; padding: 12px 14px;
+                       border: 1px solid #dce1ea; border-radius: 10px;
+                       font-size: 14px; background: #fff; }
+        .btn { padding: 12px 22px; border: none; border-radius: 10px;
+               font-weight: 600; font-size: 14px; cursor: pointer; }
+        .btn-primario { background: #14213d; color: #fff; }
+        .btn-primario:hover { background: #1f3b68; }
+        .btn-success { background: #00b894; color: #fff; }
+        .btn-warning { background: #f4a261; color: #fff; }
+        .btn-danger { background: #ef233c; color: #fff; }
+        .btn-secund { background: #dce1ea; color: #1d3557; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .tabela-wrap { background: #fff; border-radius: 14px;
+                       box-shadow: 0 4px 16px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; font-size: 13px;
+                 border-bottom: 1px solid #eef2f7; }
+        th { background: #f8f9fa; color: #14213d; font-size: 11px;
+             text-transform: uppercase; letter-spacing: 0.5px; }
+        tbody tr:hover { background: #f9fbfd; }
+        tbody tr.inativo { opacity: 0.5; background: #fafafa; }
+
+        .perfil-tag {
+            display: inline-block; padding: 3px 10px; border-radius: 4px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        }
+        .pf-admin    { background: #14213d; color: #fff; }
+        .pf-medico   { background: #4cc9f0; color: #fff; }
+        .pf-recepcao { background: #00b894; color: #fff; }
+        .pf-tecnico  { background: #f4a261; color: #fff; }
+
+        .status-tag {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 11px; font-weight: 700;
+        }
+        .ativo-sim { background: #d4edda; color: #155724; }
+        .ativo-nao { background: #f8d7da; color: #721c24; }
+
+        .acoes { display: flex; gap: 4px; flex-wrap: wrap; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0;
+                 background: rgba(0,0,0,0.5); z-index: 1000;
+                 align-items: center; justify-content: center; }
+        .modal.aberta { display: flex; }
+        .modal-content { background: #fff; padding: 28px; border-radius: 14px;
+                         width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { color: #14213d; margin-bottom: 16px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; color: #1d3557;
+                            margin-bottom: 5px; font-size: 13px; }
+        .form-group label.obr::after { content: ' *'; color: #ef233c; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #dce1ea;
+            border-radius: 8px; background: #f9fbfd; font-size: 14px;
+        }
+        .grid-2 { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+        .grid-3 { display: grid; gap: 10px; grid-template-columns: 2fr 1fr 1fr; }
+        @media (max-width: 600px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+        #boxMedico {
+            background: #f0f7ff; border: 1px solid #cbe5ff;
+            padding: 14px; border-radius: 10px; margin-top: 10px;
+            display: none;
+        }
+        #boxMedico.visivel { display: block; }
+        #boxMedico h3 { color: #14213d; font-size: 14px; margin-bottom: 10px; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px;
+                 border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
+                 box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+                 transform: translateX(120%); transition: 0.3s; }
+        .toast.visivel { transform: translateX(0); }
+        .toast.sucesso { background: #00b894; }
+        .toast.erro    { background: #ef233c; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Usuários</p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard_admin.html">🏠 Início</a>
+                <a href="usuarios.html" class="ativo">⚙️ Usuários</a>
+                <a href="pacientes.html">👥 Pacientes</a>
+                <a href="medicamentos.html">💊 Medicamentos</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Gerenciar Usuários</h1>
+                <div class="topo-info">Cadastrar, editar e desativar contas do sistema</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <div class="barra">
+            <input type="text" id="busca" placeholder="🔍 Buscar por nome ou e-mail...">
+            <button class="btn btn-success" onclick="abrirModalNovo()">➕ Novo usuário</button>
+        </div>
+
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Perfil</th>
+                        <th>CRM / Especialidade</th>
+                        <th>Status</th>
+                        <th>Último acesso</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela">
+                    <tr><td colspan="7" style="padding:30px; text-align:center; color:#999;">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+<!-- Modal: criar/editar -->
+<div id="modalUser" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitulo">Novo Usuário</h2>
+        <input type="hidden" id="userId">
+
+        <div class="form-group">
+            <label class="obr">Nome completo</label>
+            <input type="text" id="nome" required>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="obr">E-mail</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label class="obr">Perfil</label>
+                <select id="perfil" required onchange="ajustarPerfil()">
+                    <option value="">— selecione —</option>
+                    <option value="ADMIN">Administrador</option>
+                    <option value="MEDICO">Médico(a)</option>
+                    <option value="RECEPCAO">Recepção</option>
+                    <option value="TECNICO_ENFERMAGEM">Técnica de Enfermagem</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" id="grpSenha">
+            <label class="obr">Senha</label>
+            <input type="password" id="senha" minlength="4"
+                   placeholder="Mínimo 4 caracteres">
+            <small style="color:#666; font-size:12px;">
+                A senha é gerada agora. Pode ser alterada depois.
+            </small>
+        </div>
+
+        <!-- Campos extras só pra MEDICO -->
+        <div id="boxMedico">
+            <h3>🩺 Dados do médico (CRM + especialidade)</h3>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label class="obr">CPF</label>
+                    <input type="text" id="medico_cpf" maxlength="14"
+                           placeholder="000.000.000-00"
+                           oninput="mascaraCpf(this)">
+                </div>
+                <div class="form-group">
+                    <label class="obr">CRM Nº</label>
+                    <input type="text" id="crm_numero" placeholder="12345">
+                </div>
+                <div class="form-group">
+                    <label class="obr">UF</label>
+                    <input type="text" id="crm_uf" maxlength="2"
+                           style="text-transform:uppercase;" placeholder="DF">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="obr">Especialidade</label>
+                <select id="especialidade_id">
+                    <option value="">— carregando —</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:18px;">
+            <button class="btn btn-success" onclick="salvar()">💾 Salvar</button>
+            <button class="btn btn-secund" onclick="fecharModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: alterar senha -->
+<div id="modalSenha" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <h2>Alterar Senha</h2>
+        <p style="color:#666; font-size:13px; margin-bottom:14px;">
+            Usuário: <strong id="senhaNomeUser">—</strong>
+        </p>
+        <input type="hidden" id="senhaUserId">
+        <div class="form-group">
+            <label class="obr">Nova senha</label>
+            <input type="password" id="novaSenha" minlength="4"
+                   placeholder="Mínimo 4 caracteres">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+            <button class="btn btn-success" onclick="confirmarNovaSenha()">Alterar</button>
+            <button class="btn btn-secund" onclick="fecharModalSenha()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+const API = 'http://localhost/prontuario_medico/backend/usuarios.php';
+let especialidadesCache = [];
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await verificarSessao('ADMIN');
+    let timer = null;
+    document.getElementById('busca').addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => carregar(e.target.value), 250);
+    });
+    carregar('');
+});
+
+async function carregar(filtro) {
+    const url = API + '?acao=listar' + (filtro ? '&busca=' + encodeURIComponent(filtro) : '');
+    const r = await fetch(url, { credentials: 'include' });
+    const j = await r.json();
+    const tb = document.getElementById('tabela');
+    if (j.status !== 'ok' || !j.usuarios || j.usuarios.length === 0) {
+        tb.innerHTML = '<tr><td colspan="7" style="padding:30px; text-align:center; color:#999;">Nenhum usuário encontrado.</td></tr>';
+        return;
+    }
+    tb.innerHTML = j.usuarios.map(u => `
+        <tr class="${parseInt(u.ativo,10) ? '' : 'inativo'}">
+            <td><strong>${escapar(u.nome)}</strong></td>
+            <td>${escapar(u.email)}</td>
+            <td>${rotuloPerfil(u.perfil)}</td>
+            <td>${u.crm_numero
+                    ? escapar(u.crm_numero) + '/' + escapar(u.crm_uf) + '<br><small style="color:#666;">' + escapar(u.especialidade || '') + '</small>'
+                    : '—'}</td>
+            <td>${parseInt(u.ativo,10)
+                    ? '<span class="status-tag ativo-sim">ATIVO</span>'
+                    : '<span class="status-tag ativo-nao">INATIVO</span>'}</td>
+            <td>${u.ultimo_acesso ? new Date(u.ultimo_acesso).toLocaleString('pt-BR') : '—'}</td>
+            <td>
+                <div class="acoes">
+                    <button class="btn btn-sm btn-secund" onclick="editar(${u.id})">Editar</button>
+                    <button class="btn btn-sm btn-warning" onclick="abrirModalSenha(${u.id}, '${escapar(u.nome)}')">Senha</button>
+                    ${parseInt(u.ativo,10)
+                        ? `<button class="btn btn-sm btn-danger" onclick="desativar(${u.id}, '${escapar(u.nome)}')">Desativar</button>`
+                        : `<button class="btn btn-sm btn-success" onclick="reativar(${u.id})">Reativar</button>`}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function rotuloPerfil(p) {
+    const map = {
+        'ADMIN':              {txt: 'Administrador',     cls: 'pf-admin'},
+        'MEDICO':             {txt: 'Médico(a)',         cls: 'pf-medico'},
+        'RECEPCAO':           {txt: 'Recepção',          cls: 'pf-recepcao'},
+        'TECNICO_ENFERMAGEM': {txt: 'Téc. Enfermagem',   cls: 'pf-tecnico'},
+    };
+    const d = map[p] || {txt: p, cls: ''};
+    return `<span class="perfil-tag ${d.cls}">${d.txt}</span>`;
+}
+
+// ---------- Modal cadastro/edição ----------
+async function abrirModalNovo() {
+    document.getElementById('modalTitulo').textContent = 'Novo Usuário';
+    document.getElementById('userId').value = '';
+    ['nome','email','senha','medico_cpf','crm_numero','crm_uf'].forEach(id =>
+        document.getElementById(id).value = ''
+    );
+    document.getElementById('perfil').value = '';
+    document.getElementById('especialidade_id').value = '';
+    document.getElementById('grpSenha').style.display = '';
+    ajustarPerfil();
+    await carregarEspecialidades();
+    document.getElementById('modalUser').classList.add('aberta');
+}
+
+async function editar(id) {
+    const r = await fetch(`${API}?acao=buscar&id=${id}`, { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') return toast(j.msg || 'Erro.', 'erro');
+    const u = j.usuario;
+
+    document.getElementById('modalTitulo').textContent = 'Editar Usuário';
+    document.getElementById('userId').value = u.id;
+    document.getElementById('nome').value   = u.nome;
+    document.getElementById('email').value  = u.email;
+    document.getElementById('perfil').value = u.perfil;
+    document.getElementById('grpSenha').style.display = 'none';  // edição não troca senha
+
+    document.getElementById('medico_cpf').value = u.medico_cpf ? formatarCpf(u.medico_cpf) : '';
+    document.getElementById('crm_numero').value = u.crm_numero || '';
+    document.getElementById('crm_uf').value     = u.crm_uf || '';
+    await carregarEspecialidades();
+    document.getElementById('especialidade_id').value = u.especialidade_id || '';
+
+    ajustarPerfil();
+    document.getElementById('modalUser').classList.add('aberta');
+}
+
+function fecharModal() {
+    document.getElementById('modalUser').classList.remove('aberta');
+}
+
+function ajustarPerfil() {
+    const ehMedico = document.getElementById('perfil').value === 'MEDICO';
+    document.getElementById('boxMedico').classList.toggle('visivel', ehMedico);
+}
+
+async function carregarEspecialidades() {
+    if (especialidadesCache.length === 0) {
+        const r = await fetch(`${API}?acao=especialidades`, { credentials: 'include' });
+        const j = await r.json();
+        if (j.status === 'ok') especialidadesCache = j.especialidades || [];
+    }
+    const sel = document.getElementById('especialidade_id');
+    sel.innerHTML = '<option value="">— selecione —</option>'
+        + especialidadesCache.map(e =>
+            `<option value="${e.id}">${escapar(e.nome)}</option>`
+        ).join('');
+}
+
+async function salvar() {
+    const id = document.getElementById('userId').value;
+    const dados = {
+        nome:   document.getElementById('nome').value,
+        email:  document.getElementById('email').value,
+        perfil: document.getElementById('perfil').value,
+    };
+    if (!id) {
+        dados.senha = document.getElementById('senha').value;
+    }
+    if (dados.perfil === 'MEDICO') {
+        dados.medico_cpf       = document.getElementById('medico_cpf').value;
+        dados.crm_numero       = document.getElementById('crm_numero').value;
+        dados.crm_uf           = document.getElementById('crm_uf').value;
+        dados.especialidade_id = parseInt(document.getElementById('especialidade_id').value, 10);
+    }
+
+    const url = id ? `${API}?acao=atualizar&id=${id}` : `${API}?acao=criar`;
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, {
+        method, credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(dados),
+    });
+    const j = await r.json();
+    if (j.status === 'ok' || r.status === 201) {
+        toast(j.msg, 'sucesso');
+        fecharModal();
+        carregar(document.getElementById('busca').value);
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+// ---------- Senha ----------
+function abrirModalSenha(id, nome) {
+    document.getElementById('senhaUserId').value = id;
+    document.getElementById('senhaNomeUser').textContent = nome;
+    document.getElementById('novaSenha').value = '';
+    document.getElementById('modalSenha').classList.add('aberta');
+}
+function fecharModalSenha() {
+    document.getElementById('modalSenha').classList.remove('aberta');
+}
+async function confirmarNovaSenha() {
+    const id = document.getElementById('senhaUserId').value;
+    const senha = document.getElementById('novaSenha').value;
+    if (senha.length < 4) return toast('Senha deve ter pelo menos 4 caracteres.', 'erro');
+    const r = await fetch(`${API}?acao=alterar_senha&id=${id}`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ senha }),
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast(j.msg, 'sucesso');
+        fecharModalSenha();
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+// ---------- Desativar / Reativar ----------
+async function desativar(id, nome) {
+    if (!confirm(`Desativar "${nome}"?\nEle não conseguirá mais fazer login.`)) return;
+    const r = await fetch(`${API}?acao=desativar&id=${id}`, {
+        method: 'DELETE', credentials: 'include',
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast(j.msg, 'sucesso');
+        carregar(document.getElementById('busca').value);
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+async function reativar(id) {
+    const r = await fetch(`${API}?acao=reativar&id=${id}`, {
+        method: 'PUT', credentials: 'include',
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast(j.msg, 'sucesso');
+        carregar(document.getElementById('busca').value);
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+// ---------- Helpers ----------
+function mascaraCpf(el) {
+    let v = el.value.replace(/\D/g,'').slice(0,11);
+    v = v.replace(/(\d{3})(\d)/,'$1.$2');
+    v = v.replace(/(\d{3})(\d)/,'$1.$2');
+    v = v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+    el.value = v;
+}
+function formatarCpf(cpf) {
+    if (!cpf || cpf.length !== 11) return cpf || '';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+function escapar(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visivel ' + (tipo || 'sucesso');
+    setTimeout(() => t.classList.remove('visivel'), 3000);
+}
+</script>
+
+</body>
+</html>

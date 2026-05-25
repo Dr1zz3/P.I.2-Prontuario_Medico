@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicamentos — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+        .barra { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .barra input { flex: 1; min-width: 240px; padding: 12px 14px;
+                       border: 1px solid #dce1ea; border-radius: 10px;
+                       font-size: 14px; background: #fff; }
+        .btn { padding: 12px 22px; border: none; border-radius: 10px;
+               font-weight: 600; font-size: 14px; cursor: pointer; }
+        .btn-primario { background: #14213d; color: #fff; }
+        .btn-primario:hover { background: #1f3b68; }
+        .btn-success { background: #00b894; color: #fff; }
+        .btn-danger { background: #ef233c; color: #fff; }
+        .btn-secund { background: #dce1ea; color: #1d3557; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+        .acao-card { background: #fff; padding: 18px; border-radius: 14px;
+                     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+                     margin-bottom: 16px; }
+        .acao-card h3 { color: #14213d; margin-bottom: 8px; font-size: 15px; }
+        .acao-card p { color: #666; font-size: 13px; margin-bottom: 10px; }
+
+        .csv-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .csv-row input[type=file] { padding: 6px; border: 1px solid #dce1ea;
+                                    border-radius: 8px; background: #f9fbfd; }
+
+        .tabela-wrap { background: #fff; border-radius: 14px;
+                       box-shadow: 0 4px 16px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; font-size: 13px;
+                 border-bottom: 1px solid #eef2f7; }
+        th { background: #f8f9fa; color: #14213d; font-size: 11px;
+             text-transform: uppercase; letter-spacing: 0.5px; }
+        tbody tr:hover { background: #f9fbfd; }
+        .tag-antibiotico { background: #f4a261; color: #fff; padding: 2px 8px;
+                           border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .tag-comum { background: #dce1ea; color: #1d3557; padding: 2px 8px;
+                     border-radius: 4px; font-size: 11px; font-weight: 700; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0;
+                 background: rgba(0,0,0,0.5); z-index: 1000;
+                 align-items: center; justify-content: center; }
+        .modal.aberta { display: flex; }
+        .modal-content { background: #fff; padding: 28px; border-radius: 14px;
+                         width: 90%; max-width: 540px; }
+        .modal-content h2 { color: #14213d; margin-bottom: 14px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; color: #1d3557;
+                            margin-bottom: 5px; font-size: 13px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #dce1ea;
+            border-radius: 8px; background: #f9fbfd; font-size: 14px;
+        }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px;
+                 border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
+                 box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+                 transform: translateX(120%); transition: 0.3s; }
+        .toast.visivel { transform: translateX(0); }
+        .toast.sucesso { background: #00b894; }
+        .toast.erro    { background: #ef233c; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Catálogo</p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard_admin.html">🏠 Início</a>
+                <a href="usuarios.html">⚙️ Usuários</a>
+                <a href="pacientes.html">👥 Pacientes</a>
+                <a href="medicamentos.html" class="ativo">💊 Medicamentos</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Catálogo de Medicamentos</h1>
+                <div class="topo-info">Gerenciar medicamentos disponíveis nas receitas</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <!-- Importar CSV -->
+        <div class="acao-card">
+            <h3>📂 Importar do CSV</h3>
+            <p>O arquivo deve ter cabeçalho com pelo menos
+               <code>nome_comercial</code> e <code>principio_ativo</code>.
+               Outras colunas aceitas: <code>apresentacao</code>, <code>fabricante</code>,
+               <code>registro_anvisa</code>, <code>e_antibiotico</code> (0/1).
+               Suporta vírgula ou ponto-e-vírgula como separador.</p>
+            <div class="csv-row">
+                <input type="file" id="csvFile" accept=".csv">
+                <button class="btn btn-primario" onclick="importarCsv()">📥 Importar</button>
+                <a href="#" onclick="baixarTemplate(event)" style="color:#4cc9f0; font-size:13px;">
+                    ⬇️ baixar modelo
+                </a>
+            </div>
+        </div>
+
+        <div class="barra">
+            <input type="text" id="busca" placeholder="🔍 Buscar por nome comercial ou princípio ativo...">
+            <button class="btn btn-success" onclick="abrirModal()">➕ Novo medicamento</button>
+        </div>
+
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome Comercial</th>
+                        <th>Princípio Ativo</th>
+                        <th>Apresentação</th>
+                        <th>Fabricante</th>
+                        <th>Tipo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbMed">
+                    <tr><td colspan="6" style="padding:30px; text-align:center; color:#999;">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Modal: cadastrar/editar -->
+<div id="modalMed" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitulo">Novo Medicamento</h2>
+        <input type="hidden" id="medId">
+        <div class="form-group">
+            <label>Nome comercial *</label>
+            <input type="text" id="nome_comercial" required>
+        </div>
+        <div class="form-group">
+            <label>Princípio ativo *</label>
+            <input type="text" id="principio_ativo" required>
+        </div>
+        <div class="form-group">
+            <label>Apresentação</label>
+            <input type="text" id="apresentacao" placeholder="ex.: comprimido 500mg">
+        </div>
+        <div class="form-group">
+            <label>Fabricante</label>
+            <input type="text" id="fabricante">
+        </div>
+        <div class="form-group">
+            <label>Registro ANVISA</label>
+            <input type="text" id="registro_anvisa">
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="e_antibiotico">
+                É antibiótico (gera receituário especial em 2 vias)
+            </label>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+            <button class="btn btn-success" onclick="salvar()">💾 Salvar</button>
+            <button class="btn btn-secund" onclick="fecharModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+const API = 'http://localhost/prontuario_medico/backend/medicamentos.php';
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await verificarSessao('ADMIN', 'MEDICO');
+    let timer = null;
+    document.getElementById('busca').addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => carregar(e.target.value), 250);
+    });
+    carregar('');
+});
+
+async function carregar(filtro) {
+    const url = API + '?acao=listar' + (filtro ? '&busca=' + encodeURIComponent(filtro) : '');
+    const r = await fetch(url, { credentials: 'include' });
+    const j = await r.json();
+    const tb = document.getElementById('tbMed');
+    if (j.status !== 'ok' || !j.medicamentos || j.medicamentos.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" style="padding:30px; text-align:center; color:#999;">Nenhum medicamento cadastrado.</td></tr>';
+        return;
+    }
+    tb.innerHTML = j.medicamentos.map(m => `
+        <tr>
+            <td><strong>${escapar(m.nome_comercial)}</strong></td>
+            <td>${escapar(m.principio_ativo)}</td>
+            <td>${escapar(m.apresentacao || '—')}</td>
+            <td>${escapar(m.fabricante || '—')}</td>
+            <td>${parseInt(m.e_antibiotico,10)
+                    ? '<span class="tag-antibiotico">ANTIBIÓTICO</span>'
+                    : '<span class="tag-comum">COMUM</span>'}</td>
+            <td>
+                <button class="btn btn-sm btn-secund" onclick="editar(${m.id})">Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="desativar(${m.id}, '${escapar(m.nome_comercial)}')">Desativar</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function abrirModal() {
+    document.getElementById('modalTitulo').textContent = 'Novo Medicamento';
+    ['medId','nome_comercial','principio_ativo','apresentacao','fabricante','registro_anvisa']
+        .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('e_antibiotico').checked = false;
+    document.getElementById('modalMed').classList.add('aberta');
+}
+
+function fecharModal() {
+    document.getElementById('modalMed').classList.remove('aberta');
+}
+
+async function editar(id) {
+    const r = await fetch(`${API}?acao=buscar&id=${id}`, { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') return toast(j.msg || 'Erro.', 'erro');
+    const m = j.medicamento;
+    document.getElementById('modalTitulo').textContent = 'Editar Medicamento';
+    document.getElementById('medId').value = m.id;
+    document.getElementById('nome_comercial').value = m.nome_comercial;
+    document.getElementById('principio_ativo').value = m.principio_ativo;
+    document.getElementById('apresentacao').value = m.apresentacao || '';
+    document.getElementById('fabricante').value = m.fabricante || '';
+    document.getElementById('registro_anvisa').value = m.registro_anvisa || '';
+    document.getElementById('e_antibiotico').checked = !!parseInt(m.e_antibiotico, 10);
+    document.getElementById('modalMed').classList.add('aberta');
+}
+
+async function salvar() {
+    const dados = {
+        nome_comercial:  document.getElementById('nome_comercial').value,
+        principio_ativo: document.getElementById('principio_ativo').value,
+        apresentacao:    document.getElementById('apresentacao').value,
+        fabricante:      document.getElementById('fabricante').value,
+        registro_anvisa: document.getElementById('registro_anvisa').value,
+        e_antibiotico:   document.getElementById('e_antibiotico').checked,
+    };
+    const id = document.getElementById('medId').value;
+    const url = id ? `${API}?acao=atualizar&id=${id}` : `${API}?acao=criar`;
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, {
+        method, credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(dados),
+    });
+    const j = await r.json();
+    if (j.status === 'ok' || r.status === 201) {
+        toast(j.msg, 'sucesso');
+        fecharModal();
+        carregar(document.getElementById('busca').value);
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+async function desativar(id, nome) {
+    if (!confirm(`Desativar "${nome}"?\nEle deixará de aparecer nas receitas novas.`)) return;
+    const r = await fetch(`${API}?acao=desativar&id=${id}`, {
+        method: 'DELETE', credentials: 'include',
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast(j.msg, 'sucesso');
+        carregar(document.getElementById('busca').value);
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+async function importarCsv() {
+    const file = document.getElementById('csvFile').files[0];
+    if (!file) return toast('Escolha um arquivo CSV.', 'erro');
+    const fd = new FormData();
+    fd.append('arquivo', file);
+    const r = await fetch(`${API}?acao=importar_csv`, {
+        method: 'POST', credentials: 'include', body: fd,
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast(j.msg, 'sucesso');
+        document.getElementById('csvFile').value = '';
+        carregar('');
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+function baixarTemplate(e) {
+    e.preventDefault();
+    const csv = 'nome_comercial,principio_ativo,apresentacao,fabricante,registro_anvisa,e_antibiotico\n'
+              + 'Tylenol,Paracetamol,comprimido 750mg,Janssen,1234567890,0\n'
+              + 'Amoxil,Amoxicilina,capsula 500mg,GSK,9876543210,1\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'modelo_medicamentos.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function escapar(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visivel ' + (tipo || 'sucesso');
+    setTimeout(() => t.classList.remove('visivel'), 3000);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Médico — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Painel Médico</p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard_medico.html" class="ativo">🏠 Início</a>
+                <a href="pacientes.html">👥 Pacientes</a>
+                <a href="agenda.html">📅 Minha Agenda</a>
+                <a href="prontuario.html">📋 Prontuário</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Painel do Médico</h1>
+                <div class="topo-info">Bem-vindo(a) ao sistema de prontuário</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <section class="boas-vindas">
+            <h2>Olá, Dr(a). <span id="user-nome-boas-vindas">—</span></h2>
+            <p>Aqui você acessa os prontuários dos pacientes, registra evoluções,
+               solicita exames e emite receitas.</p>
+        </section>
+
+        <div class="cards-grid">
+
+            <div class="card">
+                <div class="icon">👥</div>
+                <h3>Pacientes</h3>
+                <p>Buscar um paciente e abrir seu prontuário completo
+                   com histórico de consultas.</p>
+                <a href="pacientes.html">Acessar →</a>
+            </div>
+
+            <div class="card">
+                <div class="icon">📅</div>
+                <h3>Minha Agenda</h3>
+                <p>Ver os pacientes agendados pra hoje e próximos dias.</p>
+                <a href="agenda.html">Ver agenda →</a>
+            </div>
+
+            <div class="card">
+                <div class="icon">📋</div>
+                <h3>Nova Evolução</h3>
+                <p>Registrar atendimento, prescrever receita ou
+                   solicitar exames. Inclui sinais vitais e
+                   histórico do paciente.</p>
+                <a href="prontuario.html">Iniciar →</a>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        await verificarSessao('MEDICO');
+        // Replica nome no card de boas-vindas
+        const n = document.getElementById('user-nome').textContent;
+        document.getElementById('user-nome-boas-vindas').textContent = n;
+    });
+</script>
+
+</body>
+</html>

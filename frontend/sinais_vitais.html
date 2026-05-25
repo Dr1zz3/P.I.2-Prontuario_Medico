@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinais Vitais — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+        .pac-selector { display: flex; gap: 12px; align-items: center;
+                        margin-bottom: 20px; flex-wrap: wrap; }
+        .pac-selector select { padding: 12px; border: 1px solid #dce1ea;
+                               border-radius: 10px; background: #fff;
+                               min-width: 280px; font-size: 14px; }
+
+        .pac-info { background: #fff; padding: 20px; border-radius: 14px;
+                    margin-bottom: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+                    display: flex; gap: 24px; flex-wrap: wrap; }
+        .pac-info div strong { display: block; color: #14213d; font-size: 12px;
+                               text-transform: uppercase; letter-spacing: 0.5px;
+                               margin-bottom: 3px; }
+
+        .tabs { display: flex; gap: 4px; border-bottom: 2px solid #dce1ea; }
+        .tab-btn { background: none; border: none; padding: 14px 22px;
+                   font-size: 15px; font-weight: 600; cursor: pointer;
+                   color: #666; border-bottom: 3px solid transparent;
+                   margin-bottom: -2px; }
+        .tab-btn.ativo { color: #14213d; border-bottom-color: #4cc9f0; }
+
+        .tab-content { background: #fff; padding: 26px;
+                       border-radius: 0 14px 14px 14px;
+                       box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+
+        .grid-sinais { display: grid; gap: 16px;
+                       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .form-group label { display: block; font-weight: 600; color: #1d3557;
+                            margin-bottom: 6px; font-size: 13px; }
+        .form-group .hint { font-size: 11px; color: #999; font-weight: 400;
+                            margin-left: 4px; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 11px 13px; border: 1px solid #dce1ea;
+            border-radius: 10px; font-size: 15px; background: #f9fbfd;
+            font-family: inherit;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #4cc9f0; outline: none;
+            box-shadow: 0 0 0 3px rgba(76,201,240,0.15); background: #fff;
+        }
+        .form-group textarea { min-height: 70px; resize: vertical; }
+        .col-2 { grid-column: span 2; }
+        .col-full { grid-column: 1 / -1; }
+
+        .imc-display { background: #f0f7ff; border: 1px solid #cbe5ff;
+                       border-radius: 10px; padding: 14px;
+                       margin-top: 12px; text-align: center; }
+        .imc-display .valor { font-size: 24px; font-weight: 700; color: #14213d; }
+        .imc-display .classe { font-size: 13px; margin-top: 4px; }
+        .imc-baixo  { color: #4cc9f0; }
+        .imc-normal { color: #00b894; }
+        .imc-sobre  { color: #f4a261; }
+        .imc-obeso  { color: #ef233c; }
+
+        .acoes { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+        .btn { padding: 12px 22px; border: none; border-radius: 10px;
+               font-weight: 600; font-size: 14px; cursor: pointer; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-salvar    { background: #f4a261; color: #fff; }
+        .btn-assinar   { background: #00b894; color: #fff; }
+        .btn-suspender { background: #ef233c; color: #fff; }
+        .btn-secund    { background: #dce1ea; color: #1d3557; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+        .sv-item { background: #fff; border-left: 4px solid #4cc9f0;
+                   padding: 18px 22px; margin-bottom: 14px; border-radius: 10px;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .sv-item.rascunho { border-left-color: #f4a261; background: #fffbf5; }
+        .sv-item.assinado { border-left-color: #00b894; }
+        .sv-item.suspenso { border-left-color: #ef233c; background: #fff5f5; }
+        .sv-item.suspenso .sv-grid { text-decoration: line-through; opacity: 0.6; }
+
+        .sv-header { display: flex; justify-content: space-between;
+                     align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 11px;
+                 font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .badge-rascunho { background: #f4a261; color: #fff; }
+        .badge-assinado { background: #00b894; color: #fff; }
+        .badge-suspenso { background: #ef233c; color: #fff; }
+
+        .sv-grid { display: grid; gap: 10px; margin-top: 10px;
+                   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+        .sv-grid .item { background: #f9fbfd; padding: 10px;
+                         border-radius: 8px; font-size: 13px; }
+        .sv-grid .item .lbl { color: #666; font-size: 11px;
+                              text-transform: uppercase; }
+        .sv-grid .item .val { font-weight: 700; color: #14213d; font-size: 16px;
+                              margin-top: 2px; }
+
+        .sv-suspensao { background: #ffe0e0; border: 1px solid #ef233c;
+                        padding: 10px 14px; border-radius: 8px;
+                        margin-bottom: 10px; font-size: 13px; color: #c8001f; }
+
+        .modal { display: none; position: fixed; inset: 0;
+                 background: rgba(0,0,0,0.5); z-index: 1000;
+                 align-items: center; justify-content: center; }
+        .modal.aberta { display: flex; }
+        .modal-content { background: #fff; padding: 28px; border-radius: 14px;
+                         width: 90%; max-width: 480px; }
+        .modal-content h2 { color: #14213d; margin-bottom: 12px; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px;
+                 border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
+                 box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+                 transform: translateX(120%); transition: 0.3s; }
+        .toast.visivel { transform: translateX(0); }
+        .toast.sucesso { background: #00b894; }
+        .toast.erro    { background: #ef233c; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Sinais Vitais</p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard_tecnico.html">🏠 Início</a>
+                <a href="pacientes.html">👥 Pacientes</a>
+                <a href="sinais_vitais.html" class="ativo">🩺 Sinais Vitais</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Sinais Vitais</h1>
+                <div class="topo-info">Registro de aferições</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <!-- Modo busca: visível quando nenhum paciente selecionado -->
+        <div id="modoBusca">
+            <div class="pac-selector">
+                <input type="text" id="busca" placeholder="🔍 Buscar paciente por nome ou CPF..."
+                       style="flex:1; min-width:240px; padding:12px 14px;
+                              border:1px solid #dce1ea; border-radius:10px;
+                              font-size:14px; background:#fff;">
+            </div>
+
+            <div class="tabela-wrap" style="background:#fff; border-radius:14px;
+                 box-shadow:0 4px 16px rgba(0,0,0,0.05); overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">Nome</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">CPF</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">Idade</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;">Telefone</th>
+                            <th style="padding:14px 18px; text-align:left; background:#f8f9fa;
+                                       color:#14213d; font-size:12px; text-transform:uppercase;
+                                       letter-spacing:0.5px; border-bottom:1px solid #eef2f7;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbPacientes">
+                        <tr><td colspan="5" style="padding:30px; text-align:center; color:#999;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modo paciente selecionado -->
+        <div id="modoPaciente" style="display:none;">
+            <button class="btn btn-secund" onclick="voltarParaBusca()"
+                    style="margin-bottom:16px;">⬅️ Trocar paciente</button>
+        </div>
+
+        <section id="pacInfo" class="pac-info" style="display:none;"></section>
+
+        <section id="pacContent" style="display:none;">
+
+            <div class="tabs">
+                <button class="tab-btn ativo" data-tab="novo">➕ Nova Aferição</button>
+                <button class="tab-btn"       data-tab="historico">📜 Histórico</button>
+            </div>
+
+            <div id="tab-novo" class="tab-content">
+                <input type="hidden" id="svIdEdicao" value="">
+
+                <div class="grid-sinais">
+                    <div class="form-group">
+                        <label>PA sistólica <span class="hint">mmHg</span></label>
+                        <input type="number" id="pressao_sistolica" placeholder="120">
+                    </div>
+                    <div class="form-group">
+                        <label>PA diastólica <span class="hint">mmHg</span></label>
+                        <input type="number" id="pressao_diastolica" placeholder="80">
+                    </div>
+                    <div class="form-group">
+                        <label>FC <span class="hint">bpm</span></label>
+                        <input type="number" id="frequencia_cardiaca" placeholder="72">
+                    </div>
+                    <div class="form-group">
+                        <label>FR <span class="hint">irpm</span></label>
+                        <input type="number" id="frequencia_respiratoria" placeholder="18">
+                    </div>
+                    <div class="form-group">
+                        <label>SatO₂ <span class="hint">%</span></label>
+                        <input type="number" id="saturacao_o2" placeholder="98" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Temperatura <span class="hint">°C</span></label>
+                        <input type="number" id="temperatura" step="0.1" placeholder="36.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Peso <span class="hint">kg</span></label>
+                        <input type="number" id="peso_kg" step="0.1" placeholder="70.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Altura <span class="hint">cm</span></label>
+                        <input type="number" id="altura_cm" placeholder="170">
+                    </div>
+                    <div class="form-group col-full">
+                        <label>Observações</label>
+                        <textarea id="observacoes" placeholder="Ex.: paciente referindo tontura ao aferir PA."></textarea>
+                    </div>
+                </div>
+
+                <div id="imcBox" class="imc-display" style="display:none;">
+                    <div>IMC calculado</div>
+                    <div class="valor" id="imcValor">—</div>
+                    <div class="classe" id="imcClasse">—</div>
+                </div>
+
+                <div class="acoes">
+                    <button class="btn btn-salvar"  onclick="salvarRascunho()">💾 Salvar como rascunho</button>
+                    <button class="btn btn-assinar" onclick="assinarRegistro()">✍️ Assinar (imutável)</button>
+                    <button class="btn btn-secund"  onclick="limparForm()">Limpar</button>
+                </div>
+
+                <p style="margin-top:16px; font-size:13px; color:#666;">
+                    💡 <strong>Salvar</strong> mantém editável.
+                       <strong>Assinar</strong> finaliza — depois só pode ser suspenso (com justificativa).
+                </p>
+            </div>
+
+            <div id="tab-historico" class="tab-content" style="display:none;">
+                <div id="historicoLista">
+                    <p style="color:#666;">Selecione um paciente.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Modal Suspender -->
+<div id="modalSuspender" class="modal">
+    <div class="modal-content">
+        <h2>Suspender Aferição</h2>
+        <p style="color:#666; margin-bottom:14px;">
+            Justificativa obrigatória. A aferição continua no histórico, marcada como suspensa.
+        </p>
+        <div class="form-group">
+            <label>Justificativa</label>
+            <textarea id="justificativaSuspensao"
+                style="width:100%; min-height:90px; padding:10px;
+                       border-radius:8px; border:1px solid #dce1ea;"
+                placeholder="Ex.: leitura do oxímetro estava com erro, refiz medição."></textarea>
+        </div>
+        <div class="acoes" style="margin-top:14px;">
+            <button class="btn btn-suspender" onclick="confirmarSuspensao()">Confirmar</button>
+            <button class="btn btn-secund" onclick="fecharModalSuspender()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+const API_PAC = 'http://localhost/prontuario_medico/backend/pacientes.php';
+const API_SV  = 'http://localhost/prontuario_medico/backend/sinais_vitais.php';
+
+let pacienteAtual = null;
+let svSuspenderId = null;
+
+let modoSomenteLeitura = false;
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await verificarSessao('TECNICO_ENFERMAGEM', 'MEDICO', 'ADMIN');
+
+    // Médico e admin entram em modo somente-leitura: escondem aba de cadastro
+    const perfilTxt = document.getElementById('user-perfil').textContent;
+    modoSomenteLeitura = !perfilTxt.includes('Enferm');
+    if (modoSomenteLeitura) {
+        document.querySelector('.tab-btn[data-tab="novo"]').style.display = 'none';
+        document.getElementById('tab-novo').style.display = 'none';
+        document.getElementById('tab-historico').style.display = 'block';
+        // Já marca histórico como ativa
+        document.querySelector('.tab-btn[data-tab="historico"]').classList.add('ativo');
+        // Ajusta menu lateral pro perfil correto
+        const menu = document.querySelector('.menu');
+        const home = perfilTxt.includes('Médico') ? 'dashboard_medico.html' : 'dashboard_admin.html';
+        menu.innerHTML = `
+            <a href="${home}">🏠 Início</a>
+            <a href="pacientes.html">👥 Pacientes</a>
+            <a href="prontuario.html">📋 Prontuário</a>
+            <a href="sinais_vitais.html" class="ativo">🩺 Sinais Vitais</a>
+        `;
+    }
+
+    configurarTabs();
+
+    // IMC ao digitar peso/altura
+    ['peso_kg','altura_cm'].forEach(id => {
+        document.getElementById(id).addEventListener('input', calcularIMC);
+    });
+
+    // Busca de pacientes (debounce simples)
+    let timer = null;
+    document.getElementById('busca').addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => carregarListaPacientes(e.target.value), 250);
+    });
+
+    // Carrega lista inicial
+    await carregarListaPacientes('');
+
+    // Pré-seleciona paciente vindo da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pacIdUrl = parseInt(urlParams.get('paciente_id'), 10);
+    if (pacIdUrl) await selecionarPaciente(pacIdUrl);
+});
+
+async function carregarListaPacientes(filtro) {
+    const url = API_PAC + '?acao=listar'
+              + (filtro ? '&busca=' + encodeURIComponent(filtro) : '');
+    const r = await fetch(url, { credentials: 'include' });
+    const j = await r.json();
+    const tb = document.getElementById('tbPacientes');
+    if (j.status !== 'ok' || !j.pacientes || j.pacientes.length === 0) {
+        tb.innerHTML = '<tr><td colspan="5" style="padding:30px; text-align:center; color:#999;">Nenhum paciente encontrado.</td></tr>';
+        return;
+    }
+    tb.innerHTML = j.pacientes.map(p => `
+        <tr style="cursor:pointer; transition:background 0.15s;"
+            onmouseover="this.style.background='#f9fbfd'"
+            onmouseout="this.style.background=''"
+            onclick="selecionarPaciente(${p.id})">
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                <strong>${escapar(p.nome)}</strong></td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                ${formatarCpf(p.cpf)}</td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                ${calcularIdade(p.data_nascimento)} anos</td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                ${escapar(p.telefone || '—')}</td>
+            <td style="padding:14px 18px; border-bottom:1px solid #eef2f7;">
+                <span style="color:#4cc9f0; font-weight:600;">Selecionar →</span></td>
+        </tr>
+    `).join('');
+}
+
+function voltarParaBusca() {
+    document.getElementById('modoBusca').style.display    = 'block';
+    document.getElementById('modoPaciente').style.display = 'none';
+    document.getElementById('pacInfo').style.display      = 'none';
+    document.getElementById('pacContent').style.display   = 'none';
+    pacienteAtual = null;
+    limparForm();
+}
+
+function formatarCpf(cpf) {
+    if (!cpf || cpf.length !== 11) return cpf || '—';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+async function selecionarPaciente(id) {
+    const r = await fetch(`${API_PAC}?acao=buscar&id=${id}`, { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') return;
+    pacienteAtual = j.paciente;
+    renderizarPacienteInfo();
+    // Esconde lista/busca, mostra modo paciente
+    document.getElementById('modoBusca').style.display    = 'none';
+    document.getElementById('modoPaciente').style.display = 'block';
+    document.getElementById('pacContent').style.display   = 'block';
+    carregarHistorico();
+}
+
+function renderizarPacienteInfo() {
+    const p = pacienteAtual;
+    const div = document.getElementById('pacInfo');
+    div.innerHTML = `
+        <div><strong>Nome</strong>${escapar(p.nome)}</div>
+        <div><strong>CPF</strong>${escapar(p.cpf)}</div>
+        <div><strong>Idade</strong>${calcularIdade(p.data_nascimento)} anos</div>
+        <div><strong>Sexo</strong>${escapar(p.sexo)}</div>
+        <div><strong>Alergias</strong>${escapar(p.alergias || '—')}</div>
+    `;
+    div.style.display = 'flex';
+}
+
+function configurarTabs() {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('ativo'));
+            b.classList.add('ativo');
+            const alvo = b.dataset.tab;
+            document.getElementById('tab-novo').style.display      = (alvo === 'novo') ? 'block' : 'none';
+            document.getElementById('tab-historico').style.display = (alvo === 'historico') ? 'block' : 'none';
+            if (alvo === 'historico') carregarHistorico();
+        });
+    });
+}
+
+// ---------- IMC ----------
+function calcularIMC() {
+    const peso   = parseFloat(document.getElementById('peso_kg').value);
+    const altCm  = parseFloat(document.getElementById('altura_cm').value);
+    const box    = document.getElementById('imcBox');
+    if (!peso || !altCm) { box.style.display = 'none'; return; }
+    const altM = altCm / 100;
+    const imc = peso / (altM * altM);
+    const v = imc.toFixed(1);
+    let classe = '', css = '';
+    if (imc < 18.5)       { classe = 'Abaixo do peso';      css = 'imc-baixo';  }
+    else if (imc < 25)    { classe = 'Peso normal';         css = 'imc-normal'; }
+    else if (imc < 30)    { classe = 'Sobrepeso';           css = 'imc-sobre';  }
+    else if (imc < 35)    { classe = 'Obesidade grau I';    css = 'imc-obeso';  }
+    else if (imc < 40)    { classe = 'Obesidade grau II';   css = 'imc-obeso';  }
+    else                  { classe = 'Obesidade grau III';  css = 'imc-obeso';  }
+    document.getElementById('imcValor').textContent = v;
+    document.getElementById('imcClasse').textContent = classe;
+    document.getElementById('imcClasse').className = 'classe ' + css;
+    box.style.display = 'block';
+}
+
+// ---------- Form ----------
+function lerForm() {
+    return {
+        pressao_sistolica:       document.getElementById('pressao_sistolica').value,
+        pressao_diastolica:      document.getElementById('pressao_diastolica').value,
+        frequencia_cardiaca:     document.getElementById('frequencia_cardiaca').value,
+        frequencia_respiratoria: document.getElementById('frequencia_respiratoria').value,
+        saturacao_o2:            document.getElementById('saturacao_o2').value,
+        temperatura:             document.getElementById('temperatura').value,
+        peso_kg:                 document.getElementById('peso_kg').value,
+        altura_cm:               document.getElementById('altura_cm').value,
+        observacoes:             document.getElementById('observacoes').value,
+    };
+}
+function preencherForm(sv) {
+    document.getElementById('svIdEdicao').value = sv.id ?? '';
+    ['pressao_sistolica','pressao_diastolica','frequencia_cardiaca',
+     'frequencia_respiratoria','saturacao_o2','temperatura',
+     'peso_kg','altura_cm','observacoes'].forEach(k => {
+        document.getElementById(k).value = sv[k] ?? '';
+     });
+    calcularIMC();
+}
+function limparForm() {
+    document.getElementById('svIdEdicao').value = '';
+    ['pressao_sistolica','pressao_diastolica','frequencia_cardiaca',
+     'frequencia_respiratoria','saturacao_o2','temperatura',
+     'peso_kg','altura_cm','observacoes'].forEach(k =>
+        document.getElementById(k).value = ''
+     );
+    document.getElementById('imcBox').style.display = 'none';
+}
+
+async function salvarRascunho() {
+    if (!pacienteAtual) return toast('Selecione um paciente.', 'erro');
+
+    const idEdicao = document.getElementById('svIdEdicao').value;
+    const dados = lerForm();
+    let url, method;
+    if (idEdicao) {
+        url    = `${API_SV}?acao=salvar&id=${idEdicao}`;
+        method = 'PUT';
+    } else {
+        url    = `${API_SV}?acao=criar`;
+        method = 'POST';
+        dados.paciente_id = pacienteAtual.id;
+    }
+    const r = await fetch(url, {
+        method, credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(dados),
+    });
+    const j = await r.json();
+    if (j.status === 'ok' || r.status === 201) {
+        toast('Rascunho salvo.', 'sucesso');
+        if (j.id) document.getElementById('svIdEdicao').value = j.id;
+        carregarHistorico();
+    } else {
+        toast(j.msg || 'Erro ao salvar.', 'erro');
+    }
+}
+
+async function assinarRegistro() {
+    if (!pacienteAtual) return toast('Selecione um paciente.', 'erro');
+    let id = document.getElementById('svIdEdicao').value;
+    if (!id) {
+        await salvarRascunho();
+        id = document.getElementById('svIdEdicao').value;
+        if (!id) return;
+    }
+    if (!confirm('Após assinar, a aferição fica imutável. Continuar?')) return;
+
+    const r = await fetch(`${API_SV}?acao=assinar&id=${id}`, {
+        method: 'PUT', credentials: 'include',
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast('Aferição assinada.', 'sucesso');
+        limparForm();
+        carregarHistorico();
+    } else {
+        toast(j.msg || 'Erro ao assinar.', 'erro');
+    }
+}
+
+// ---------- Histórico ----------
+async function carregarHistorico() {
+    if (!pacienteAtual) return;
+    const div = document.getElementById('historicoLista');
+    div.innerHTML = '<p style="color:#666;">Carregando...</p>';
+
+    const r = await fetch(`${API_SV}?acao=listar&paciente_id=${pacienteAtual.id}`,
+                          { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') {
+        div.innerHTML = `<p style="color:#c00;">${j.msg}</p>`;
+        return;
+    }
+    if (j.sinais.length === 0) {
+        div.innerHTML = '<p style="color:#666;">Nenhuma aferição registrada.</p>';
+        return;
+    }
+    div.innerHTML = j.sinais.map(renderizarSV).join('');
+}
+
+function renderizarSV(s) {
+    const data = new Date(s.data_afericao).toLocaleString('pt-BR');
+    const classe = s.status.toLowerCase();
+    const podeEditar    = (s.status === 'RASCUNHO' && s.eu_sou_autor);
+    const podeSuspender = (s.status === 'ASSINADO' && s.eu_sou_autor);
+
+    const avisoSusp = (s.status === 'SUSPENSO')
+        ? `<div class="sv-suspensao">⚠️ <strong>SUSPENSA:</strong> ${escapar(s.justificativa_suspensao)}</div>`
+        : '';
+
+    const items = [];
+    if (s.pressao_sistolica && s.pressao_diastolica)
+        items.push(`<div class="item"><div class="lbl">PA</div><div class="val">${s.pressao_sistolica}/${s.pressao_diastolica}</div></div>`);
+    if (s.frequencia_cardiaca)
+        items.push(`<div class="item"><div class="lbl">FC</div><div class="val">${s.frequencia_cardiaca} bpm</div></div>`);
+    if (s.frequencia_respiratoria)
+        items.push(`<div class="item"><div class="lbl">FR</div><div class="val">${s.frequencia_respiratoria} irpm</div></div>`);
+    if (s.saturacao_o2)
+        items.push(`<div class="item"><div class="lbl">SatO₂</div><div class="val">${s.saturacao_o2}%</div></div>`);
+    if (s.temperatura)
+        items.push(`<div class="item"><div class="lbl">Temp</div><div class="val">${s.temperatura}°C</div></div>`);
+    if (s.peso_kg)
+        items.push(`<div class="item"><div class="lbl">Peso</div><div class="val">${s.peso_kg} kg</div></div>`);
+    if (s.altura_cm)
+        items.push(`<div class="item"><div class="lbl">Altura</div><div class="val">${s.altura_cm} cm</div></div>`);
+
+    const acoesHtml = [];
+    if (podeEditar)
+        acoesHtml.push(`<button class="btn btn-sm btn-secund" onclick='editar(${JSON.stringify(s)})'>Continuar editando</button>`);
+    if (podeSuspender)
+        acoesHtml.push(`<button class="btn btn-sm btn-suspender" onclick="abrirModalSuspender(${s.id})">Suspender</button>`);
+
+    return `
+        <div class="sv-item ${classe}">
+            <div class="sv-header">
+                <h4>${data}</h4>
+                <span class="badge badge-${classe}">${s.status}</span>
+            </div>
+            <div style="font-size:13px; color:#666; margin-bottom:8px;">
+                ${escapar(s.autor_nome)}
+                ${s.assinado_em ? '· Assinado em ' + new Date(s.assinado_em).toLocaleString('pt-BR') : ''}
+            </div>
+            ${avisoSusp}
+            <div class="sv-grid">${items.join('')}</div>
+            ${s.observacoes ? `<div style="margin-top:10px; font-size:13px;"><strong>Obs:</strong> ${escapar(s.observacoes)}</div>` : ''}
+            ${acoesHtml.length ? '<div class="acoes">' + acoesHtml.join('') + '</div>' : ''}
+        </div>
+    `;
+}
+
+function editar(s) {
+    preencherForm(s);
+    document.querySelector('.tab-btn[data-tab="novo"]').click();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- Suspender ----------
+function abrirModalSuspender(id) {
+    svSuspenderId = id;
+    document.getElementById('justificativaSuspensao').value = '';
+    document.getElementById('modalSuspender').classList.add('aberta');
+}
+function fecharModalSuspender() {
+    svSuspenderId = null;
+    document.getElementById('modalSuspender').classList.remove('aberta');
+}
+async function confirmarSuspensao() {
+    const j = document.getElementById('justificativaSuspensao').value.trim();
+    if (!j) return toast('Justificativa é obrigatória.', 'erro');
+    const r = await fetch(`${API_SV}?acao=suspender&id=${svSuspenderId}`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ justificativa: j }),
+    });
+    const resp = await r.json();
+    if (resp.status === 'ok') {
+        toast('Aferição suspensa.', 'sucesso');
+        fecharModalSuspender();
+        carregarHistorico();
+    } else {
+        toast(resp.msg || 'Erro.', 'erro');
+    }
+}
+
+// ---------- Helpers ----------
+function escapar(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+function calcularIdade(nasc) {
+    if (!nasc) return '—';
+    const d = new Date(nasc); const h = new Date();
+    let i = h.getFullYear() - d.getFullYear();
+    const m = h.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && h.getDate() < d.getDate())) i--;
+    return i;
+}
+function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visivel ' + (tipo || 'sucesso');
+    setTimeout(() => t.classList.remove('visivel'), 3000);
+}
+</script>
+
+</body>
+</html>

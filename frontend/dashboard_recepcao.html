@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Recepção — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Painel Recepção</p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard_recepcao.html" class="ativo">🏠 Início</a>
+                <a href="agenda.html">📅 Agenda Geral</a>
+                <a href="pacientes.html">👥 Pacientes</a>
+                <a href="paciente_cadastro.html">➕ Cadastrar Paciente</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Painel da Recepção</h1>
+                <div class="topo-info">Agendamentos e cadastro de pacientes</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <section class="boas-vindas">
+            <h2>Olá, <span id="user-nome-boas-vindas">—</span></h2>
+            <p>Gerencie a agenda da clínica e cadastre novos pacientes.</p>
+        </section>
+
+        <div class="cards-grid">
+
+            <div class="card">
+                <div class="icon">📅</div>
+                <h3>Agenda do Dia</h3>
+                <p>Ver e organizar todos os atendimentos do dia,
+                   marcar/cancelar consultas.</p>
+                <a href="agenda.html">Acessar →</a>
+            </div>
+
+            <div class="card">
+                <div class="icon">👥</div>
+                <h3>Pacientes</h3>
+                <p>Buscar pacientes pelo nome ou CPF, conferir dados de contato.</p>
+                <a href="pacientes.html">Buscar →</a>
+            </div>
+
+            <div class="card">
+                <div class="icon">➕</div>
+                <h3>Cadastrar Paciente</h3>
+                <p>Cadastrar paciente novo: identificação, endereço,
+                   convênio e consentimento LGPD.</p>
+                <a href="paciente_cadastro.html">Cadastrar →</a>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        await verificarSessao('RECEPCAO');
+        const n = document.getElementById('user-nome').textContent;
+        document.getElementById('user-nome-boas-vindas').textContent = n;
+    });
+</script>
+
+</body>
+</html>

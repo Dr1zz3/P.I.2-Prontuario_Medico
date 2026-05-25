@@ -1,0 +1,30 @@
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Dependências (caso futuro)
+node_modules/
+vendor/
+
+# Configurações locais sensíveis (caso futuro)
+.env
+.env.local
+config.local.php
+
+# Backups
+*.bak
+*.backup
+*.swp
+
+# Claude
+.claude/

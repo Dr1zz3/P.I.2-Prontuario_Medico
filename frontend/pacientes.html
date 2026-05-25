@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacientes — MED+CLIN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+        .busca-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .busca-bar input { flex: 1; min-width: 240px; padding: 12px 14px;
+                           border: 1px solid #dce1ea; border-radius: 10px;
+                           font-size: 14px; background: #fff; }
+        .btn { padding: 12px 22px; border: none; border-radius: 10px;
+               font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .btn-primario  { background: #14213d; color: #fff; }
+        .btn-primario:hover  { background: #1f3b68; }
+        .btn-secund    { background: #dce1ea; color: #1d3557; }
+        .btn-secund:hover { background: #c0c6cf; }
+        .btn-danger    { background: #ef233c; color: #fff; }
+        .btn-danger:hover { background: #c8001f; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+        .tabela-wrap { background: #fff; border-radius: 14px;
+                       box-shadow: 0 4px 16px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 18px; text-align: left; font-size: 14px;
+                 border-bottom: 1px solid #eef2f7; }
+        th { background: #f8f9fa; color: #14213d;
+             font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        tbody tr:hover { background: #f9fbfd; }
+        .acoes { display: flex; gap: 6px; }
+        .vazio { padding: 50px; text-align: center; color: #999; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px;
+                 border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
+                 box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+                 transform: translateX(120%); transition: 0.3s; }
+        .toast.visivel { transform: translateX(0); }
+        .toast.sucesso { background: #00b894; }
+        .toast.erro    { background: #ef233c; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo-area">
+                <h2>MED<span>+</span>CLIN</h2>
+                <p>Pacientes</p>
+            </div>
+            <nav class="menu">
+                <a href="#" id="lnk-inicio">🏠 Início</a>
+                <a href="pacientes.html" class="ativo">👥 Pacientes</a>
+            </nav>
+        </div>
+        <div class="user-box">
+            <strong id="user-nome">—</strong>
+            <span class="perfil-tag" id="user-perfil">—</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Pacientes</h1>
+                <div class="topo-info">Buscar, cadastrar e editar pacientes</div>
+            </div>
+            <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        </header>
+
+        <div class="busca-bar">
+            <input type="text" id="busca" placeholder="🔍 Buscar por nome ou CPF...">
+            <button class="btn btn-secund" onclick="carregarLista()">Buscar</button>
+            <button class="btn btn-primario" id="btnNovo" onclick="window.location.href='paciente_form.html'">
+                ➕ Novo Paciente
+            </button>
+        </div>
+
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Nascimento</th>
+                        <th>Sexo</th>
+                        <th>Telefone</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela">
+                    <tr><td colspan="6" class="vazio">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="assets/js/sessao.js"></script>
+<script>
+const API = 'http://localhost/prontuario_medico/backend/pacientes.php';
+let perfilAtual = null;
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await verificarSessao(); // qualquer perfil logado pode ver pacientes
+
+    // Define o "Início" do menu conforme o perfil
+    const perfilTxt = document.getElementById('user-perfil').textContent;
+    perfilAtual = perfilTxt.includes('Médico') ? 'MEDICO'
+                : perfilTxt.includes('Recepção') ? 'RECEPCAO'
+                : perfilTxt.includes('Enferm') ? 'TECNICO_ENFERMAGEM'
+                : 'ADMIN';
+    const destinos = {
+        'MEDICO': 'dashboard_medico.html',
+        'RECEPCAO': 'dashboard_recepcao.html',
+        'TECNICO_ENFERMAGEM': 'dashboard_tecnico.html',
+        'ADMIN': 'dashboard_admin.html',
+    };
+    document.getElementById('lnk-inicio').href = destinos[perfilAtual] ?? '#';
+
+    // Só recepção/admin podem cadastrar/desativar
+    if (!['RECEPCAO','ADMIN'].includes(perfilAtual)) {
+        document.getElementById('btnNovo').style.display = 'none';
+    }
+
+    carregarLista();
+
+    document.getElementById('busca').addEventListener('keypress', e => {
+        if (e.key === 'Enter') carregarLista();
+    });
+});
+
+async function carregarLista() {
+    const busca = document.getElementById('busca').value.trim();
+    const url = API + '?acao=listar' + (busca ? '&busca=' + encodeURIComponent(busca) : '');
+    const r = await fetch(url, { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') return mostrarErro('Erro ao listar.');
+    renderizar(j.pacientes);
+}
+
+function renderizar(lista) {
+    const tb = document.getElementById('tabela');
+    if (!lista || lista.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum paciente encontrado.</td></tr>';
+        return;
+    }
+    tb.innerHTML = lista.map(p => `
+        <tr>
+            <td><strong>${escapar(p.nome)}</strong></td>
+            <td>${formatarCpf(p.cpf)}</td>
+            <td>${formatarData(p.data_nascimento)} (${calcularIdade(p.data_nascimento)} anos)</td>
+            <td>${p.sexo || '—'}</td>
+            <td>${escapar(p.telefone || '—')}</td>
+            <td class="acoes">
+                ${perfilAtual === 'MEDICO'
+                    ? `<a class="btn btn-sm btn-primario" href="prontuario.html?paciente_id=${p.id}">Prontuário</a>`
+                    : `<a class="btn btn-sm btn-secund" href="paciente_form.html?id=${p.id}">Editar</a>`}
+                ${['RECEPCAO','ADMIN'].includes(perfilAtual)
+                    ? `<button class="btn btn-sm btn-danger" onclick="desativar(${p.id}, '${escapar(p.nome)}')">Desativar</button>`
+                    : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function desativar(id, nome) {
+    if (!confirm(`Desativar paciente "${nome}"?\n\nEle continuará no histórico, mas não aparecerá nas listagens.`)) return;
+    const r = await fetch(`${API}?acao=desativar&id=${id}`, {
+        method: 'DELETE', credentials: 'include',
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+        toast('Paciente desativado.', 'sucesso');
+        carregarLista();
+    } else {
+        toast(j.msg || 'Erro.', 'erro');
+    }
+}
+
+// Helpers
+function escapar(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+function formatarCpf(cpf) {
+    if (!cpf || cpf.length !== 11) return cpf || '—';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+function formatarData(d) {
+    if (!d) return '—';
+    const [y,m,dia] = d.split('-');
+    return `${dia}/${m}/${y}`;
+}
+function calcularIdade(nasc) {
+    if (!nasc) return '—';
+    const d = new Date(nasc);
+    const hoje = new Date();
+    let i = hoje.getFullYear() - d.getFullYear();
+    const mm = hoje.getMonth() - d.getMonth();
+    if (mm < 0 || (mm === 0 && hoje.getDate() < d.getDate())) i--;
+    return i;
+}
+function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visivel ' + (tipo || 'sucesso');
+    setTimeout(() => t.classList.remove('visivel'), 3000);
+}
+function mostrarErro(msg) { toast(msg, 'erro'); }
+</script>
+
+</body>
+</html>
