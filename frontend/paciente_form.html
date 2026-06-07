@@ -111,6 +111,8 @@
                     <div class="form-group">
                         <label class="obr" for="data_nascimento">Data de nascimento</label>
                         <input type="date" id="data_nascimento" required>
+                        <small id="idadeInfo" style="color:#666; font-size:12px; margin-top:4px;
+                               display:none;"></small>
                     </div>
                     <div class="form-group">
                         <label class="obr" for="sexo">Sexo</label>
@@ -124,6 +126,16 @@
                     <div class="form-group">
                         <label for="cartao_sus">Cartão SUS</label>
                         <input type="text" id="cartao_sus" maxlength="15">
+                    </div>
+                    <div class="form-group col-2" id="grpResponsavel">
+                        <label id="lblResponsavel" for="responsavel_nome">
+                            Nome do responsável
+                            <span id="dicaResponsavel" style="font-size:11px; color:#999; font-weight:400;">
+                                (opcional — paciente é maior de 16 anos)
+                            </span>
+                        </label>
+                        <input type="text" id="responsavel_nome"
+                               placeholder="Mãe, pai ou responsável legal">
                     </div>
                 </div>
             </section>
@@ -233,6 +245,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cep').addEventListener('blur', e => buscarCep(e.target.value));
     document.getElementById('telefone').addEventListener('input', e => mascaraTel(e.target));
 
+    // Idade -> avalia se responsável é obrigatório
+    document.getElementById('data_nascimento').addEventListener('change', avaliarIdade);
+
     if (pacienteId) {
         document.getElementById('titulo').textContent = 'Editar Paciente';
         await carregarPaciente(pacienteId);
@@ -241,13 +256,65 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('formPaciente').addEventListener('submit', salvar);
 });
 
+/** Calcula idade em anos completos */
+function calcularIdade(dataYmd) {
+    if (!dataYmd) return null;
+    const d = new Date(dataYmd);
+    if (isNaN(d.getTime())) return null;
+    const hoje = new Date();
+    let i = hoje.getFullYear() - d.getFullYear();
+    const m = hoje.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) i--;
+    return i;
+}
+
+/** Atualiza UI conforme idade calculada da data de nascimento */
+function avaliarIdade() {
+    const dt = document.getElementById('data_nascimento').value;
+    const idade = calcularIdade(dt);
+    const infoEl = document.getElementById('idadeInfo');
+    const lblResp = document.getElementById('lblResponsavel');
+    const dicaResp = document.getElementById('dicaResponsavel');
+    const inputResp = document.getElementById('responsavel_nome');
+
+    if (idade === null || idade < 0) {
+        infoEl.style.display = 'none';
+        lblResp.classList.remove('obr');
+        dicaResp.textContent = '(opcional)';
+        inputResp.required = false;
+        return;
+    }
+
+    infoEl.style.display = 'block';
+    infoEl.textContent = `Idade calculada: ${idade} anos`;
+
+    if (idade < 16) {
+        infoEl.style.color = '#c8001f';
+        infoEl.textContent += ' ⚠️ Paciente menor de 16 — nome do responsável obrigatório';
+        lblResp.classList.add('obr');
+        dicaResp.textContent = '(OBRIGATÓRIO — paciente menor de 16 anos)';
+        dicaResp.style.color = '#c8001f';
+        inputResp.required = true;
+        inputResp.style.borderColor = '#f4a261';
+        inputResp.style.background = '#fffbf5';
+    } else {
+        infoEl.style.color = '#00b894';
+        lblResp.classList.remove('obr');
+        dicaResp.textContent = '(opcional — paciente é maior de 16 anos)';
+        dicaResp.style.color = '#999';
+        inputResp.required = false;
+        inputResp.style.borderColor = '';
+        inputResp.style.background = '';
+    }
+}
+
 async function carregarPaciente(id) {
     const r = await fetch(`${API}?acao=buscar&id=${id}`, { credentials: 'include' });
     const j = await r.json();
     if (j.status !== 'ok') return toast(j.msg || 'Erro.', 'erro');
     const p = j.paciente;
     [
-        'nome','nome_social','rg','data_nascimento','sexo','cartao_sus',
+        'nome','nome_social','responsavel_nome','rg','data_nascimento','sexo','cartao_sus',
         'telefone','email','cep','logradouro','numero','complemento',
         'bairro','cidade','uf','tipo_sanguineo','alergias'
     ].forEach(k => {
@@ -256,6 +323,7 @@ async function carregarPaciente(id) {
     });
     document.getElementById('cpf').value = formatarCpfDisplay(p.cpf);
     document.getElementById('consentimento_lgpd').checked = !!p.consentimento_lgpd;
+    avaliarIdade();  // ajusta o campo responsável conforme idade
 }
 
 async function buscarCep(cep) {
@@ -288,6 +356,7 @@ async function salvar(e) {
     const dados = {
         nome:               document.getElementById('nome').value,
         nome_social:        document.getElementById('nome_social').value,
+        responsavel_nome:   document.getElementById('responsavel_nome').value,
         cpf:                document.getElementById('cpf').value,
         rg:                 document.getElementById('rg').value,
         data_nascimento:    document.getElementById('data_nascimento').value,

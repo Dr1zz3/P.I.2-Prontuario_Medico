@@ -108,6 +108,7 @@ CREATE TABLE pacientes (
   cpf                 CHAR(11) NOT NULL UNIQUE,
   nome                VARCHAR(120) NOT NULL,
   nome_social         VARCHAR(120),
+  responsavel_nome    VARCHAR(120),                    -- obrigatório se paciente < 16 anos
   data_nascimento     DATE NOT NULL,
   sexo                ENUM('M','F','O') NOT NULL,
   rg                  VARCHAR(20),

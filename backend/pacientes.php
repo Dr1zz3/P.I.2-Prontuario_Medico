@@ -82,6 +82,14 @@ function cpfFormatoValido(string $cpf): bool {
     return preg_match('/^\d{11}$/', $cpf) === 1;
 }
 
+/** Calcula idade em anos completos. Retorna -1 se data inválida. */
+function calcularIdadeAnos(string $dataNascimento): int {
+    $nasc = DateTime::createFromFormat('Y-m-d', $dataNascimento);
+    if (!$nasc) return -1;
+    $hoje = new DateTime();
+    return (int)$nasc->diff($hoje)->y;
+}
+
 function montarDadosPaciente(array $body, bool $exigirCpf = true): array {
     $erros = [];
 
@@ -103,15 +111,25 @@ function montarDadosPaciente(array $body, bool $exigirCpf = true): array {
     $sexo = strtoupper(limpar($body['sexo'] ?? ''));
     if (!in_array($sexo, ['M', 'F', 'O'], true)) $erros[] = 'sexo deve ser M, F ou O';
 
+    // Responsável: obrigatório se paciente tem menos de 16 anos
+    $responsavelNome = limpar($body['responsavel_nome'] ?? '');
+    if ($dataNasc !== '' && DateTime::createFromFormat('Y-m-d', $dataNasc)) {
+        $idade = calcularIdadeAnos($dataNasc);
+        if ($idade >= 0 && $idade < 16 && $responsavelNome === '') {
+            $erros[] = 'nome do responsável é obrigatório para pacientes menores de 16 anos';
+        }
+    }
+
     if ($erros) responder(400, ['status' => 'erro', 'msg' => implode('; ', $erros)]);
 
     return [
-        'cpf'             => $cpf,
-        'nome'            => $nome,
-        'nome_social'     => limpar($body['nome_social']     ?? '') ?: null,
-        'data_nascimento' => $dataNasc,
-        'sexo'            => $sexo,
-        'rg'              => limpar($body['rg']              ?? '') ?: null,
+        'cpf'              => $cpf,
+        'nome'             => $nome,
+        'nome_social'      => limpar($body['nome_social']     ?? '') ?: null,
+        'responsavel_nome' => $responsavelNome ?: null,
+        'data_nascimento'  => $dataNasc,
+        'sexo'             => $sexo,
+        'rg'               => limpar($body['rg']              ?? '') ?: null,
         'cartao_sus'      => limpar($body['cartao_sus']      ?? '') ?: null,
         'email'           => limpar($body['email']           ?? '') ?: null,
         'telefone'        => limpar($body['telefone']        ?? '') ?: null,
@@ -139,15 +157,15 @@ if ($method === 'POST' && $acao === 'criar') {
     $d = montarDadosPaciente(lerJson(), true);
 
     $sql = 'INSERT INTO pacientes
-            (cpf, nome, nome_social, data_nascimento, sexo, rg, cartao_sus,
-             email, telefone, cep, logradouro, numero, complemento, bairro,
-             cidade, uf, tipo_sanguineo, alergias, convenio_id, numero_convenio,
-             consentimento_lgpd, data_consentimento)
+            (cpf, nome, nome_social, responsavel_nome, data_nascimento, sexo,
+             rg, cartao_sus, email, telefone, cep, logradouro, numero, complemento,
+             bairro, cidade, uf, tipo_sanguineo, alergias, convenio_id,
+             numero_convenio, consentimento_lgpd, data_consentimento)
             VALUES
-            (:cpf, :nome, :nome_social, :data_nascimento, :sexo, :rg, :cartao_sus,
-             :email, :telefone, :cep, :logradouro, :numero, :complemento, :bairro,
-             :cidade, :uf, :tipo_sanguineo, :alergias, :convenio_id, :numero_convenio,
-             :lgpd, :data_lgpd)';
+            (:cpf, :nome, :nome_social, :responsavel_nome, :data_nascimento, :sexo,
+             :rg, :cartao_sus, :email, :telefone, :cep, :logradouro, :numero, :complemento,
+             :bairro, :cidade, :uf, :tipo_sanguineo, :alergias, :convenio_id,
+             :numero_convenio, :lgpd, :data_lgpd)';
     try {
         $stmt = $pdo->prepare($sql);
         $params = $d;
@@ -193,6 +211,7 @@ if ($method === 'PUT' && $acao === 'atualizar') {
 
     $sql = 'UPDATE pacientes SET
               cpf = :cpf, nome = :nome, nome_social = :nome_social,
+              responsavel_nome = :responsavel_nome,
               data_nascimento = :data_nascimento, sexo = :sexo, rg = :rg,
               cartao_sus = :cartao_sus, email = :email, telefone = :telefone,
               cep = :cep, logradouro = :logradouro, numero = :numero,
