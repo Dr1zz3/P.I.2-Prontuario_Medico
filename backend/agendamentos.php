@@ -46,18 +46,29 @@ if ($method === 'GET' && $acao === 'medicos') {
 // LISTAR
 // ============================================================
 if ($method === 'GET' && $acao === 'listar') {
-    $data      = trim($_GET['data']       ?? '');
-    $medicoId  = (int)($_GET['medico_id'] ?? 0);
+    $data        = trim($_GET['data']        ?? '');
+    $dataInicio  = trim($_GET['data_inicio'] ?? '');
+    $dataFim     = trim($_GET['data_fim']    ?? '');
+    $medicoId    = (int)($_GET['medico_id']  ?? 0);
 
     $where = [];
     $params = [];
 
+    // Aceita: data única OU intervalo (data_inicio + data_fim)
     if ($data !== '') {
         if (!DateTime::createFromFormat('Y-m-d', $data)) {
             responder(400, ['status' => 'erro', 'msg' => 'Data inválida (use YYYY-MM-DD).']);
         }
         $where[] = 'DATE(a.data_hora) = :data';
         $params[':data'] = $data;
+    } elseif ($dataInicio !== '' && $dataFim !== '') {
+        if (!DateTime::createFromFormat('Y-m-d', $dataInicio)
+         || !DateTime::createFromFormat('Y-m-d', $dataFim)) {
+            responder(400, ['status' => 'erro', 'msg' => 'data_inicio/data_fim inválidas (YYYY-MM-DD).']);
+        }
+        $where[] = 'DATE(a.data_hora) BETWEEN :di AND :df';
+        $params[':di'] = $dataInicio;
+        $params[':df'] = $dataFim;
     }
     if ($medicoId > 0) {
         $where[] = 'a.medico_id = :mid';

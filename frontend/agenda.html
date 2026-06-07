@@ -6,27 +6,25 @@
     <title>Agenda — MED+CLIN</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <style>
+        /* ============== CONTROLES ============== */
         .controles {
-            background: #fff; padding: 18px; border-radius: 14px;
+            background: #fff; padding: 16px 20px; border-radius: 14px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
         }
-        .data-nav { display: flex; align-items: center; gap: 6px; }
-        .data-nav button {
+        .mes-nav { display: flex; align-items: center; gap: 6px; }
+        .mes-nav button {
             background: #14213d; color: #fff; border: none;
-            padding: 8px 12px; border-radius: 8px; cursor: pointer;
-            font-weight: 700;
+            padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-weight: 700; font-size: 16px;
         }
-        .data-nav button:hover { background: #1f3b68; }
-        .data-nav .btn-hoje {
-            background: #4cc9f0; color: #0d1b2a;
-        }
-        .data-nav input { padding: 8px 12px; border: 1px solid #dce1ea;
-                          border-radius: 8px; font-size: 14px; }
-        .data-label {
-            font-size: 18px; font-weight: 700; color: #14213d;
-            margin: 0 12px;
+        .mes-nav button:hover { background: #1f3b68; }
+        .mes-nav .btn-hoje { background: #4cc9f0; color: #0d1b2a; }
+        .mes-label {
+            font-size: 20px; font-weight: 700; color: #14213d;
+            margin: 0 12px; min-width: 200px; text-align: center;
+            text-transform: capitalize;
         }
         .controles select {
             padding: 9px 12px; border: 1px solid #dce1ea;
@@ -40,89 +38,172 @@
         }
         .controles .btn-novo:hover { background: #009074; }
 
-        .agendamentos {
-            display: flex; flex-direction: column; gap: 10px;
+        /* ============== CALENDÁRIO ============== */
+        .calendario {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
-        .ag-card {
-            background: #fff; border-radius: 12px; padding: 16px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            display: grid; gap: 14px;
-            grid-template-columns: 100px 1fr auto;
-            align-items: center; border-left: 4px solid #4cc9f0;
+        .dias-semana {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            background: #14213d; color: #fff;
         }
-        .ag-card.agendado     { border-left-color: #4cc9f0; }
-        .ag-card.confirmado   { border-left-color: #00b894; }
-        .ag-card.atendimento  { border-left-color: #f4a261; background: #fffbf5; }
-        .ag-card.realizado    { border-left-color: #2ec4b6; background: #f0fcfa; opacity: 0.85; }
-        .ag-card.cancelado    { border-left-color: #999; background: #f5f5f5; opacity: 0.7; }
-        .ag-card.cancelado .ag-info { text-decoration: line-through; }
-        .ag-card.faltou       { border-left-color: #ef233c; background: #fff5f5; opacity: 0.85; }
+        .dias-semana div {
+            padding: 12px 8px; text-align: center;
+            font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .grid-dias {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: minmax(120px, auto);
+            gap: 1px; background: #eef2f7;
+        }
+        .dia {
+            background: #fff; padding: 8px; cursor: pointer;
+            transition: background 0.15s; position: relative;
+            display: flex; flex-direction: column; gap: 4px;
+            min-height: 120px;
+        }
+        .dia:hover { background: #f0f7ff; }
+        .dia.outro-mes { background: #fafafa; color: #bbb; cursor: default; }
+        .dia.outro-mes:hover { background: #fafafa; }
+        .dia.hoje { background: #fff8e1; }
+        .dia.hoje:hover { background: #fff3cd; }
+        .dia.hoje .dia-numero { background: #f4a261; color: #fff; }
+        .dia.fim-de-semana { background: #f9fbfd; }
+        .dia.fim-de-semana:hover { background: #f0f7ff; }
 
-        .ag-hora {
-            font-size: 26px; font-weight: 700; color: #14213d;
-            text-align: center; line-height: 1;
+        .dia-numero {
+            font-size: 13px; font-weight: 700;
+            align-self: flex-end;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #14213d;
         }
-        .ag-hora .dur { font-size: 11px; color: #666; font-weight: 400;
-                        display: block; margin-top: 3px; }
+        .outro-mes .dia-numero { color: #bbb; }
 
-        .ag-info .paciente {
-            font-size: 16px; font-weight: 700; color: #14213d;
-            margin-bottom: 4px;
+        /* Mini agendamento dentro da célula */
+        .ag-mini {
+            background: #4cc9f0; color: #fff;
+            padding: 3px 6px; border-radius: 4px;
+            font-size: 11px; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            cursor: pointer;
+            line-height: 1.3;
         }
-        .ag-info .secundario {
-            font-size: 13px; color: #666;
-        }
-        .ag-info .tipo-tag {
-            display: inline-block; padding: 2px 10px; border-radius: 4px;
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            margin-right: 6px; background: #dce1ea; color: #1d3557;
-        }
-        .ag-info .tipo-tag.urgencia { background: #ef233c; color: #fff; }
-        .ag-info .tipo-tag.retorno  { background: #f4a261; color: #fff; }
+        .ag-mini:hover { filter: brightness(1.1); }
+        .ag-mini.agendado    { background: #4cc9f0; }
+        .ag-mini.confirmado  { background: #00b894; }
+        .ag-mini.atendimento { background: #f4a261; }
+        .ag-mini.realizado   { background: #2ec4b6; }
+        .ag-mini.cancelado   { background: #999; text-decoration: line-through; }
+        .ag-mini.faltou      { background: #ef233c; }
 
-        .ag-acoes { display: flex; flex-direction: column; gap: 6px; align-items: end; }
-        .badge-status { padding: 4px 12px; border-radius: 20px; font-size: 11px;
-                        font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
-        .b-agendado     { background: #4cc9f0; color: #fff; }
-        .b-confirmado   { background: #00b894; color: #fff; }
-        .b-em_atendimento { background: #f4a261; color: #fff; }
-        .b-realizado    { background: #2ec4b6; color: #fff; }
-        .b-cancelado    { background: #999; color: #fff; }
-        .b-faltou       { background: #ef233c; color: #fff; }
-        .acoes-row { display: flex; gap: 6px; flex-wrap: wrap; }
-        .btn-sm { padding: 5px 10px; font-size: 12px; border: none;
-                  border-radius: 6px; cursor: pointer; font-weight: 600; }
-
-        .vazio {
-            background: #fff; padding: 50px; text-align: center;
-            color: #999; border-radius: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        .ag-mais {
+            font-size: 11px; color: #4cc9f0; font-weight: 700;
+            cursor: pointer; padding: 2px 4px;
         }
+        .ag-mais:hover { color: #14213d; }
 
-        /* Modal */
+        /* ============== LEGENDA ============== */
+        .legenda {
+            display: flex; gap: 14px; flex-wrap: wrap;
+            margin-top: 16px; padding: 12px 16px;
+            background: #fff; border-radius: 10px;
+            font-size: 12px; color: #666;
+        }
+        .legenda .item { display: flex; align-items: center; gap: 6px; }
+        .legenda .bolinha { width: 12px; height: 12px; border-radius: 50%; }
+
+        /* ============== MODAIS ============== */
         .modal { display: none; position: fixed; inset: 0;
                  background: rgba(0,0,0,0.5); z-index: 1000;
                  align-items: center; justify-content: center; }
         .modal.aberta { display: flex; }
-        .modal-content { background: #fff; padding: 28px; border-radius: 14px;
-                         width: 90%; max-width: 580px; max-height: 90vh; overflow-y:auto; }
-        .modal-content h2 { color: #14213d; margin-bottom: 14px; }
+        .modal-content {
+            background: #fff; padding: 28px; border-radius: 14px;
+            width: 90%; max-width: 620px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-content h2 {
+            color: #14213d; margin-bottom: 14px;
+            border-bottom: 2px solid #4cc9f0; padding-bottom: 8px;
+        }
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-weight: 600; color: #1d3557;
-                            margin-bottom: 5px; font-size: 13px; }
+        .form-group label {
+            display: block; font-weight: 600; color: #1d3557;
+            margin-bottom: 5px; font-size: 13px;
+        }
         .form-group input, .form-group select, .form-group textarea {
             width: 100%; padding: 10px; border: 1px solid #dce1ea;
             border-radius: 8px; background: #f9fbfd; font-size: 14px;
             font-family: inherit;
         }
 
-        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 22px;
-                 border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
-                 box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-                 transform: translateX(120%); transition: 0.3s; }
+        /* Modal de detalhes do dia */
+        .ag-card-dia {
+            background: #f9fbfd; border-radius: 10px;
+            padding: 14px 18px; margin-bottom: 10px;
+            border-left: 4px solid #4cc9f0;
+            display: grid; gap: 12px;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+        }
+        .ag-card-dia.confirmado  { border-left-color: #00b894; }
+        .ag-card-dia.atendimento { border-left-color: #f4a261; background: #fffbf5; }
+        .ag-card-dia.realizado   { border-left-color: #2ec4b6; background: #f0fcfa; opacity: 0.85; }
+        .ag-card-dia.cancelado   { border-left-color: #999; background: #f5f5f5; opacity: 0.7; }
+        .ag-card-dia.cancelado .ag-info { text-decoration: line-through; }
+        .ag-card-dia.faltou      { border-left-color: #ef233c; background: #fff5f5; opacity: 0.85; }
+
+        .ag-hora-grande {
+            font-size: 22px; font-weight: 700; color: #14213d;
+            text-align: center; min-width: 60px;
+        }
+        .ag-info { font-size: 13px; }
+        .ag-info .paciente { font-weight: 700; color: #14213d; font-size: 15px; }
+        .ag-info .meta { color: #666; margin-top: 3px; }
+        .ag-info .obs { color: #666; font-style: italic; margin-top: 3px; }
+
+        .badge-status {
+            padding: 3px 10px; border-radius: 20px; font-size: 10px;
+            font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .b-agendado     { background: #4cc9f0; color: #fff; }
+        .b-confirmado   { background: #00b894; color: #fff; }
+        .b-em_atendimento { background: #f4a261; color: #fff; }
+        .b-realizado    { background: #2ec4b6; color: #fff; }
+        .b-cancelado    { background: #999; color: #fff; }
+        .b-faltou       { background: #ef233c; color: #fff; }
+
+        .ag-acoes-dia {
+            grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .btn-sm {
+            padding: 5px 12px; font-size: 12px; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; right: 20px; padding: 14px 22px;
+            border-radius: 10px; color: #fff; font-weight: 600; z-index: 2000;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            transform: translateX(120%); transition: 0.3s;
+        }
         .toast.visivel { transform: translateX(0); }
         .toast.sucesso { background: #00b894; }
         .toast.erro    { background: #ef233c; }
+
+        /* Responsivo */
+        @media(max-width:700px){
+            .grid-dias { grid-auto-rows: minmax(80px, auto); }
+            .dia { min-height: 80px; padding: 4px; }
+            .dia-numero { font-size: 11px; width: 22px; height: 22px; }
+            .ag-mini { font-size: 9px; padding: 2px 4px; }
+        }
     </style>
 </head>
 <body>
@@ -158,13 +239,12 @@
         </header>
 
         <div class="controles">
-            <div class="data-nav">
-                <button onclick="navegarDia(-1)" title="Dia anterior">◀</button>
-                <input type="date" id="dataSelecionada">
-                <button onclick="navegarDia(1)" title="Próximo dia">▶</button>
+            <div class="mes-nav">
+                <button onclick="navegarMes(-1)" title="Mês anterior">◀</button>
+                <span class="mes-label" id="mesLabel">—</span>
+                <button onclick="navegarMes(1)" title="Próximo mês">▶</button>
                 <button class="btn-hoje" onclick="irParaHoje()">Hoje</button>
             </div>
-            <span class="data-label" id="dataLabel">—</span>
 
             <select id="filtroMedico" style="display:none;">
                 <option value="">— Todos os médicos —</option>
@@ -175,14 +255,45 @@
             </button>
         </div>
 
-        <div id="lista" class="agendamentos">
-            <p class="vazio">Carregando...</p>
+        <div class="calendario">
+            <div class="dias-semana">
+                <div>Dom</div><div>Seg</div><div>Ter</div>
+                <div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+            </div>
+            <div class="grid-dias" id="gridDias">
+                <!-- preenchido por JS -->
+            </div>
+        </div>
+
+        <div class="legenda">
+            <div class="item"><span class="bolinha" style="background:#4cc9f0;"></span>Agendado</div>
+            <div class="item"><span class="bolinha" style="background:#00b894;"></span>Confirmado</div>
+            <div class="item"><span class="bolinha" style="background:#f4a261;"></span>Em atendimento</div>
+            <div class="item"><span class="bolinha" style="background:#2ec4b6;"></span>Realizado</div>
+            <div class="item"><span class="bolinha" style="background:#999;"></span>Cancelado</div>
+            <div class="item"><span class="bolinha" style="background:#ef233c;"></span>Faltou</div>
         </div>
 
     </main>
 </div>
 
-<!-- Modal de cadastro/edição -->
+<!-- Modal: detalhes do dia -->
+<div id="modalDia" class="modal">
+    <div class="modal-content">
+        <h2 id="modalDiaTitulo">Agendamentos do dia</h2>
+        <div id="modalDiaLista"></div>
+        <div style="margin-top:14px; display:flex; gap:10px;">
+            <button class="btn-sm" style="background:#00b894; color:#fff; padding:10px 18px;"
+                    onclick="abrirNovoNesteDia()" id="btnNovoNesteDia">
+                ➕ Novo agendamento neste dia
+            </button>
+            <button class="btn-sm" style="background:#dce1ea; color:#1d3557; padding:10px 18px;"
+                    onclick="fecharModalDia()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: cadastrar/editar agendamento -->
 <div id="modalAg" class="modal">
     <div class="modal-content">
         <h2 id="modalTitulo">Novo Agendamento</h2>
@@ -200,9 +311,7 @@
         <div style="display:grid; gap:10px; grid-template-columns: 1fr 1fr;">
             <div class="form-group">
                 <label>Médico *</label>
-                <select id="medicoSel">
-                    <option value="">—</option>
-                </select>
+                <select id="medicoSel"><option value="">—</option></select>
             </div>
             <div class="form-group">
                 <label>Tipo</label>
@@ -227,14 +336,13 @@
 
         <div class="form-group">
             <label>Observações</label>
-            <textarea id="observacoes" rows="3"
-                placeholder="Ex.: trazer exames recentes."></textarea>
+            <textarea id="observacoes" rows="3" placeholder="Ex.: trazer exames recentes."></textarea>
         </div>
 
         <div style="display:flex; gap:10px; margin-top:14px;">
-            <button class="btn-novo" style="margin:0;" onclick="salvar()">💾 Salvar</button>
-            <button style="background:#dce1ea; color:#1d3557; border:none; padding:10px 18px;
-                    border-radius:10px; font-weight:700; cursor:pointer;"
+            <button class="btn-sm" style="background:#00b894; color:#fff; padding:10px 18px;"
+                    onclick="salvar()">💾 Salvar</button>
+            <button class="btn-sm" style="background:#dce1ea; color:#1d3557; padding:10px 18px;"
                     onclick="fecharModal()">Cancelar</button>
         </div>
     </div>
@@ -248,19 +356,24 @@ const API_AG  = '../backend/agendamentos.php';
 const API_PAC = '../backend/pacientes.php';
 
 let perfilAtual = null;
-let dataAtual = new Date();
+let mesAtual = new Date();    // primeira do mês visível
 let medicos = [];
 let pacientesCache = [];
+let agendamentosCache = {};   // { 'YYYY-MM-DD': [agendamentos] }
+let diaSelecionado = null;
+
+const NOMES_MESES = [
+    'janeiro','fevereiro','março','abril','maio','junho',
+    'julho','agosto','setembro','outubro','novembro','dezembro'
+];
 
 window.addEventListener('DOMContentLoaded', async () => {
     await verificarSessao('MEDICO', 'RECEPCAO', 'ADMIN');
 
     const perfilTxt = document.getElementById('user-perfil').textContent;
     perfilAtual = perfilTxt.includes('Médico') ? 'MEDICO'
-                : perfilTxt.includes('Recepção') ? 'RECEPCAO'
-                : 'ADMIN';
+                : perfilTxt.includes('Recepção') ? 'RECEPCAO' : 'ADMIN';
 
-    // Ajusta menu conforme perfil
     const destinos = {
         'MEDICO': 'dashboard_medico.html',
         'RECEPCAO': 'dashboard_recepcao.html',
@@ -268,7 +381,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
     document.getElementById('lnk-inicio').href = destinos[perfilAtual] ?? '#';
 
-    // Visibilidades por perfil
     if (perfilAtual === 'MEDICO') {
         document.getElementById('btnNovo').style.display = 'none';
         document.getElementById('modoLabel').textContent = 'Minha agenda';
@@ -277,114 +389,202 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('modoLabel').textContent = 'Agenda geral';
     }
 
-    // Hoje
-    irParaHoje();
+    mesAtual = new Date();
+    mesAtual.setDate(1);
+    mesAtual.setHours(0,0,0,0);
 
-    document.getElementById('dataSelecionada').addEventListener('change', e => {
-        dataAtual = new Date(e.target.value + 'T12:00:00');
-        atualizarLabelEListar();
-    });
-    document.getElementById('filtroMedico').addEventListener('change', listar);
+    document.getElementById('filtroMedico').addEventListener('change', carregarECalendario);
 
     await carregarMedicos();
+    await carregarECalendario();
 });
 
-function formatarData(d) {
-    return d.toISOString().slice(0, 10);
-}
-function formatarDataBR(d) {
-    const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-    const meses = ['janeiro','fevereiro','março','abril','maio','junho',
-                   'julho','agosto','setembro','outubro','novembro','dezembro'];
-    return `${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
-}
-
-function atualizarLabelEListar() {
-    document.getElementById('dataSelecionada').value = formatarData(dataAtual);
-    document.getElementById('dataLabel').textContent = formatarDataBR(dataAtual);
-    listar();
-}
-
-function navegarDia(delta) {
-    dataAtual.setDate(dataAtual.getDate() + delta);
-    atualizarLabelEListar();
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+function navegarMes(delta) {
+    mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + delta, 1);
+    carregarECalendario();
 }
 function irParaHoje() {
-    dataAtual = new Date();
-    atualizarLabelEListar();
+    mesAtual = new Date();
+    mesAtual.setDate(1);
+    mesAtual.setHours(0,0,0,0);
+    carregarECalendario();
 }
 
-async function carregarMedicos() {
-    const r = await fetch(`${API_AG}?acao=medicos`, { credentials: 'include' });
-    const j = await r.json();
-    if (j.status !== 'ok') return;
-    medicos = j.medicos || [];
-    const sel = document.getElementById('filtroMedico');
-    const sel2 = document.getElementById('medicoSel');
-    medicos.forEach(m => {
-        const opt1 = document.createElement('option');
-        opt1.value = m.id;
-        opt1.textContent = `${m.nome} (${m.especialidade})`;
-        sel.appendChild(opt1);
-        const opt2 = opt1.cloneNode(true);
-        sel2.appendChild(opt2);
-    });
-}
+// ============================================================
+// CARREGAR DADOS + RENDERIZAR
+// ============================================================
+async function carregarECalendario() {
+    atualizarLabelMes();
 
-async function listar() {
-    const data = formatarData(dataAtual);
+    const inicio = primeiroDiaDaGrade(mesAtual);
+    const fim    = ultimoDiaDaGrade(mesAtual);
     const medFiltro = document.getElementById('filtroMedico').value;
-    let url = `${API_AG}?acao=listar&data=${data}`;
+
+    let url = `${API_AG}?acao=listar`
+            + `&data_inicio=${formatarYmd(inicio)}`
+            + `&data_fim=${formatarYmd(fim)}`;
     if (medFiltro) url += '&medico_id=' + medFiltro;
 
-    const r = await fetch(url, { credentials: 'include' });
-    const j = await r.json();
-    const lista = document.getElementById('lista');
-    if (j.status !== 'ok') {
-        lista.innerHTML = `<p class="vazio">${escapar(j.msg || 'Erro')}</p>`;
+    try {
+        const r = await fetch(url, { credentials: 'include' });
+        const j = await r.json();
+        if (j.status !== 'ok') { toast(j.msg || 'Erro ao carregar.', 'erro'); return; }
+
+        agendamentosCache = {};
+        for (const ag of (j.agendamentos || [])) {
+            const dia = ag.data_hora.slice(0, 10);
+            if (!agendamentosCache[dia]) agendamentosCache[dia] = [];
+            agendamentosCache[dia].push(ag);
+        }
+        for (const dia in agendamentosCache) {
+            agendamentosCache[dia].sort((a,b) => a.data_hora.localeCompare(b.data_hora));
+        }
+    } catch (err) {
+        console.error(err);
+        toast('Erro de conexão.', 'erro');
         return;
     }
-    if (!j.agendamentos || j.agendamentos.length === 0) {
-        lista.innerHTML = '<p class="vazio">Nenhum agendamento para este dia.</p>';
-        return;
-    }
-    lista.innerHTML = j.agendamentos.map(renderizar).join('');
+
+    renderizarCalendario();
 }
 
-function renderizar(a) {
-    const hora = a.data_hora.slice(11, 16);
-    const classe = a.status.toLowerCase().replace('em_atendimento', 'atendimento');
+function atualizarLabelMes() {
+    const lbl = `${NOMES_MESES[mesAtual.getMonth()]} de ${mesAtual.getFullYear()}`;
+    document.getElementById('mesLabel').textContent = lbl;
+}
 
-    const tipoTagClass = a.tipo === 'URGENCIA' ? 'urgencia'
-                       : a.tipo === 'RETORNO'  ? 'retorno' : '';
+function primeiroDiaDaGrade(mes) {
+    const d = new Date(mes.getFullYear(), mes.getMonth(), 1);
+    d.setDate(d.getDate() - d.getDay());
+    return d;
+}
+function ultimoDiaDaGrade(mes) {
+    const d = new Date(mes.getFullYear(), mes.getMonth() + 1, 0);
+    d.setDate(d.getDate() + (6 - d.getDay()));
+    return d;
+}
+function formatarYmd(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dia}`;
+}
+
+// ============================================================
+// RENDERIZAR CALENDÁRIO
+// ============================================================
+function renderizarCalendario() {
+    const grid = document.getElementById('gridDias');
+    grid.innerHTML = '';
+
+    const inicio = primeiroDiaDaGrade(mesAtual);
+    const fim    = ultimoDiaDaGrade(mesAtual);
+    const hoje   = new Date(); hoje.setHours(0,0,0,0);
+    const mesVisivel = mesAtual.getMonth();
+
+    const cursor = new Date(inicio);
+    while (cursor <= fim) {
+        const ymd = formatarYmd(cursor);
+        const div = document.createElement('div');
+        div.className = 'dia';
+        if (cursor.getMonth() !== mesVisivel) div.classList.add('outro-mes');
+        if (cursor.getTime() === hoje.getTime()) div.classList.add('hoje');
+        if ([0,6].includes(cursor.getDay())) div.classList.add('fim-de-semana');
+
+        div.innerHTML = `<div class="dia-numero">${cursor.getDate()}</div>`;
+
+        const ags = agendamentosCache[ymd] || [];
+        const tresPrimeiros = ags.slice(0, 3);
+        const restante = ags.length - tresPrimeiros.length;
+
+        for (const ag of tresPrimeiros) {
+            const mini = document.createElement('div');
+            mini.className = 'ag-mini ' + ag.status.toLowerCase().replace('em_atendimento','atendimento');
+            mini.title = `${ag.data_hora.slice(11,16)} — ${ag.paciente_nome}`;
+            mini.textContent = `${ag.data_hora.slice(11,16)} ${ag.paciente_nome.split(' ')[0]}`;
+            mini.addEventListener('click', e => {
+                e.stopPropagation();
+                abrirModalDia(ymd);
+            });
+            div.appendChild(mini);
+        }
+
+        if (restante > 0) {
+            const mais = document.createElement('div');
+            mais.className = 'ag-mais';
+            mais.textContent = `+${restante} mais`;
+            mais.addEventListener('click', e => {
+                e.stopPropagation();
+                abrirModalDia(ymd);
+            });
+            div.appendChild(mais);
+        }
+
+        if (!div.classList.contains('outro-mes')) {
+            div.addEventListener('click', () => abrirModalDia(ymd));
+        }
+
+        grid.appendChild(div);
+        cursor.setDate(cursor.getDate() + 1);
+    }
+}
+
+// ============================================================
+// MODAL DO DIA
+// ============================================================
+function abrirModalDia(ymd) {
+    diaSelecionado = ymd;
+    const [y,m,d] = ymd.split('-');
+    document.getElementById('modalDiaTitulo').textContent =
+        `Agendamentos de ${d}/${m}/${y}`;
+
+    const ags = agendamentosCache[ymd] || [];
+    const lista = document.getElementById('modalDiaLista');
+
+    if (ags.length === 0) {
+        lista.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">Nenhum agendamento neste dia.</p>';
+    } else {
+        lista.innerHTML = ags.map(renderizarCardDia).join('');
+    }
+
+    document.getElementById('btnNovoNesteDia').style.display =
+        (perfilAtual === 'MEDICO') ? 'none' : '';
+
+    document.getElementById('modalDia').classList.add('aberta');
+}
+function fecharModalDia() {
+    document.getElementById('modalDia').classList.remove('aberta');
+    diaSelecionado = null;
+}
+
+function renderizarCardDia(a) {
+    const hora = a.data_hora.slice(11, 16);
+    const classe = a.status.toLowerCase().replace('em_atendimento','atendimento');
     const tipoLabel = ({
         'PRIMEIRA_CONSULTA':'1ª consulta',
         'RETORNO':'Retorno',
         'URGENCIA':'⚠️ Urgência',
-    })[a.tipo];
+    })[a.tipo] || a.tipo;
 
     const acoes = montarAcoes(a);
 
     return `
-        <div class="ag-card ${classe}">
-            <div class="ag-hora">${hora}<span class="dur">${a.duracao_min}min</span></div>
+        <div class="ag-card-dia ${classe}">
+            <div class="ag-hora-grande">${hora}<div style="font-size:11px; color:#666; font-weight:400;">${a.duracao_min}min</div></div>
             <div class="ag-info">
                 <div class="paciente">${escapar(a.paciente_nome)}</div>
-                <div class="secundario">
-                    <span class="tipo-tag ${tipoTagClass}">${tipoLabel}</span>
-                    👨‍⚕️ ${escapar(a.medico_nome)} (${escapar(a.especialidade)})
-                    ${a.paciente_telefone ? ' · 📞 ' + escapar(a.paciente_telefone) : ''}
-                </div>
-                ${a.observacoes ? `<div class="secundario" style="margin-top:4px;"><em>${escapar(a.observacoes)}</em></div>` : ''}
+                <div class="meta">${tipoLabel} · 👨‍⚕️ ${escapar(a.medico_nome)} (${escapar(a.especialidade)})</div>
+                ${a.paciente_telefone ? `<div class="meta">📞 ${escapar(a.paciente_telefone)}</div>` : ''}
+                ${a.observacoes ? `<div class="obs">${escapar(a.observacoes)}</div>` : ''}
             </div>
-            <div class="ag-acoes">
-                <span class="badge-status b-${a.status.toLowerCase()}">${labelStatus(a.status)}</span>
-                ${acoes ? '<div class="acoes-row">' + acoes + '</div>' : ''}
-            </div>
+            <span class="badge-status b-${a.status.toLowerCase()}">${labelStatus(a.status)}</span>
+            ${acoes ? `<div class="ag-acoes-dia">${acoes}</div>` : ''}
         </div>
     `;
 }
-
 function labelStatus(s) {
     return ({
         'AGENDADO':'Agendado','CONFIRMADO':'Confirmado',
@@ -395,43 +595,31 @@ function labelStatus(s) {
 
 function montarAcoes(a) {
     const podeEditar = (perfilAtual !== 'MEDICO')
-                     && !['REALIZADO','CANCELADO','FALTOU'].includes(a.status);
-    const podeCancelar = podeEditar;
-
+                    && !['REALIZADO','CANCELADO','FALTOU'].includes(a.status);
     const acoes = [];
 
-    // Mudanças de status comuns
-    if (a.status === 'AGENDADO') {
-        if (perfilAtual !== 'MEDICO') {
-            acoes.push(botaoStatus(a.id, 'CONFIRMADO', '✓ Confirmar', '#00b894'));
-            acoes.push(botaoStatus(a.id, 'FALTOU', '✗ Faltou', '#ef233c'));
-        }
+    if (a.status === 'AGENDADO' && perfilAtual !== 'MEDICO') {
+        acoes.push(botaoStatus(a.id, 'CONFIRMADO', '✓ Confirmar', '#00b894'));
+        acoes.push(botaoStatus(a.id, 'FALTOU', '✗ Faltou', '#ef233c'));
     }
-    if (['AGENDADO','CONFIRMADO'].includes(a.status)) {
-        if (perfilAtual === 'MEDICO' || perfilAtual === 'ADMIN') {
-            acoes.push(botaoStatus(a.id, 'EM_ATENDIMENTO', '▶️ Iniciar', '#f4a261'));
-        }
+    if (['AGENDADO','CONFIRMADO'].includes(a.status)
+        && (perfilAtual === 'MEDICO' || perfilAtual === 'ADMIN')) {
+        acoes.push(botaoStatus(a.id, 'EM_ATENDIMENTO', '▶️ Iniciar', '#f4a261'));
     }
-    if (a.status === 'EM_ATENDIMENTO') {
-        if (perfilAtual === 'MEDICO' || perfilAtual === 'ADMIN') {
-            acoes.push(botaoStatus(a.id, 'REALIZADO', '✅ Concluir', '#2ec4b6'));
-        }
+    if (a.status === 'EM_ATENDIMENTO'
+        && (perfilAtual === 'MEDICO' || perfilAtual === 'ADMIN')) {
+        acoes.push(botaoStatus(a.id, 'REALIZADO', '✅ Concluir', '#2ec4b6'));
     }
-
-    // Atalhos pro médico abrir prontuário
     if (perfilAtual === 'MEDICO' && ['EM_ATENDIMENTO','CONFIRMADO','AGENDADO'].includes(a.status)) {
         acoes.push(`<a class="btn-sm" style="background:#14213d; color:#fff; text-decoration:none;"
                        href="prontuario.html?paciente_id=${a.paciente_id}">📋 Prontuário</a>`);
     }
-
-    // Editar/Cancelar pra recepção
     if (podeEditar) {
         acoes.push(`<button class="btn-sm" style="background:#dce1ea; color:#1d3557;"
                             onclick="abrirModalEditar(${a.id})">Editar</button>`);
         acoes.push(`<button class="btn-sm" style="background:#ef233c; color:#fff;"
                             onclick="cancelar(${a.id})">Cancelar</button>`);
     }
-
     return acoes.join('');
 }
 
@@ -447,8 +635,11 @@ async function mudarStatus(id, novoStatus) {
         body: JSON.stringify({ status: novoStatus }),
     });
     const j = await r.json();
-    if (j.status === 'ok') { toast('Status atualizado.', 'sucesso'); listar(); }
-    else toast(j.msg || 'Erro.', 'erro');
+    if (j.status === 'ok') {
+        toast('Status atualizado.', 'sucesso');
+        await carregarECalendario();
+        if (diaSelecionado) abrirModalDia(diaSelecionado);
+    } else toast(j.msg || 'Erro.', 'erro');
 }
 
 async function cancelar(id) {
@@ -457,12 +648,33 @@ async function cancelar(id) {
         method: 'DELETE', credentials: 'include',
     });
     const j = await r.json();
-    if (j.status === 'ok') { toast('Agendamento cancelado.', 'sucesso'); listar(); }
-    else toast(j.msg || 'Erro.', 'erro');
+    if (j.status === 'ok') {
+        toast('Cancelado.', 'sucesso');
+        await carregarECalendario();
+        if (diaSelecionado) abrirModalDia(diaSelecionado);
+    } else toast(j.msg || 'Erro.', 'erro');
 }
 
-// ---------- Modal ----------
-async function abrirModalNovo() {
+// ============================================================
+// MODAL DE NOVO/EDITAR AGENDAMENTO
+// ============================================================
+async function carregarMedicos() {
+    const r = await fetch(`${API_AG}?acao=medicos`, { credentials: 'include' });
+    const j = await r.json();
+    if (j.status !== 'ok') return;
+    medicos = j.medicos || [];
+    const sel1 = document.getElementById('filtroMedico');
+    const sel2 = document.getElementById('medicoSel');
+    medicos.forEach(m => {
+        const opt1 = document.createElement('option');
+        opt1.value = m.id;
+        opt1.textContent = `${m.nome} (${m.especialidade})`;
+        sel1.appendChild(opt1);
+        sel2.appendChild(opt1.cloneNode(true));
+    });
+}
+
+async function abrirModalNovo(dataYmd) {
     document.getElementById('modalTitulo').textContent = 'Novo Agendamento';
     document.getElementById('agId').value = '';
     document.getElementById('buscaPaciente').value = '';
@@ -472,14 +684,22 @@ async function abrirModalNovo() {
     document.getElementById('tipoSel').value = 'PRIMEIRA_CONSULTA';
     document.getElementById('duracao').value = '30';
     document.getElementById('observacoes').value = '';
-    // Default: data atual selecionada + horário próximo
-    const dt = new Date(dataAtual);
-    dt.setHours(8, 0, 0, 0);
-    document.getElementById('dataHora').value = dt.toISOString().slice(0,16);
+
+    const dt = dataYmd ? new Date(dataYmd + 'T08:00:00') : new Date();
+    if (!dataYmd) dt.setHours(8,0,0,0);
+    const offsetMs = dt.getTimezoneOffset() * 60000;
+    document.getElementById('dataHora').value =
+        new Date(dt.getTime() - offsetMs).toISOString().slice(0,16);
 
     await carregarPacientesDatalist();
     document.getElementById('modalAg').classList.add('aberta');
     document.getElementById('buscaPaciente').focus();
+}
+
+function abrirNovoNesteDia() {
+    const dia = diaSelecionado;
+    fecharModalDia();
+    abrirModalNovo(dia);
 }
 
 async function abrirModalEditar(id) {
@@ -507,29 +727,22 @@ function fecharModal() {
 }
 
 async function carregarPacientesDatalist() {
-    if (pacientesCache.length > 0) {
-        renderizarDatalistPacientes();
-        return;
+    if (pacientesCache.length === 0) {
+        const r = await fetch(`${API_PAC}?acao=listar`, { credentials: 'include' });
+        const j = await r.json();
+        if (j.status === 'ok') pacientesCache = j.pacientes || [];
     }
-    const r = await fetch(`${API_PAC}?acao=listar`, { credentials: 'include' });
-    const j = await r.json();
-    if (j.status === 'ok') pacientesCache = j.pacientes || [];
-    renderizarDatalistPacientes();
-}
-
-function renderizarDatalistPacientes() {
     const dl = document.getElementById('datalistPacientes');
     dl.innerHTML = pacientesCache.map(p =>
         `<option value="${escapar(p.nome)} — ${formatarCpf(p.cpf)}" data-id="${p.id}"></option>`
     ).join('');
+
     document.getElementById('buscaPaciente').addEventListener('input', e => {
         const v = e.target.value;
-        const match = pacientesCache.find(p =>
-            v === `${p.nome} — ${formatarCpf(p.cpf)}`);
+        const match = pacientesCache.find(p => v === `${p.nome} — ${formatarCpf(p.cpf)}`);
         if (match) {
             document.getElementById('pacienteSelId').value = match.id;
-            document.getElementById('pacienteInfo').textContent =
-                `✓ ${match.nome} selecionado`;
+            document.getElementById('pacienteInfo').textContent = `✓ ${match.nome} selecionado`;
         } else {
             document.getElementById('pacienteSelId').value = '';
             document.getElementById('pacienteInfo').textContent = '';
@@ -540,6 +753,7 @@ function renderizarDatalistPacientes() {
 async function salvar() {
     const pid = parseInt(document.getElementById('pacienteSelId').value, 10);
     if (!pid) return toast('Selecione um paciente válido.', 'erro');
+
     const dados = {
         paciente_id: pid,
         medico_id:   parseInt(document.getElementById('medicoSel').value, 10),
@@ -563,12 +777,15 @@ async function salvar() {
     if (j.status === 'ok' || r.status === 201) {
         toast(j.msg, 'sucesso');
         fecharModal();
-        listar();
+        await carregarECalendario();
     } else {
         toast(j.msg || 'Erro ao salvar.', 'erro');
     }
 }
 
+// ============================================================
+// HELPERS
+// ============================================================
 function formatarCpf(cpf) {
     if (!cpf || cpf.length !== 11) return cpf || '—';
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
